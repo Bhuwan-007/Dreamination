@@ -25,6 +25,8 @@ from ..followups import FollowupQuestion, FollowupResponse, generate_followup_qu
 from ..models.dream import DreamStatus
 from ..models.user import User
 from ..repositories.dream import DreamRepository
+from ..schemas.extraction import ExtractionOutput
+from ..stages.extract import run_extraction_and_ingest
 from ..storage import storage_service
 from ..transcription import get_transcription_provider
 
@@ -257,4 +259,46 @@ async def submit_answers(
         created_at=new_decrypted.created_at,
         updated_at=new_decrypted.updated_at,
     )
+
+
+class ExtractDreamResponse(BaseModel):
+    dream_id: uuid.UUID
+    status: str
+    extraction: ExtractionOutput
+    resolved_entities_count: int
+
+
+@router.post("/{dream_id}/extract", response_model=ExtractDreamResponse)
+async def extract_dream(
+    dream_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ExtractDreamResponse:
+    """
+    Executes the Extraction stage on a captured dream:
+    Extracts faithful fragments, entities, emotions, and transitions,
+    resolves recurring entities against the user's graph, and links co-occurrence edges.
+    """
+    repo = DreamRepository(db, current_user.id)
+    decrypted = await repo.get_decrypted(dream_id)
+    if not decrypted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    try:
+        extraction_output, resolved_entities = await run_extraction_and_ingest(
+            db=db,
+            dream_id=dream_id,
+            user_id=current_user.id,
+        )
+        return ExtractDreamResponse(
+            dream_id=dream_id,
+            status=DreamStatus.EXTRACTED.value,
+            extraction=extraction_output,
+            resolved_entities_count=len(resolved_entities),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Extraction failed: {str(exc)}",
+        ) from exc
 
