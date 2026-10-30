@@ -1,0 +1,95 @@
+:root {
+  --bg: #090D11;
+  --surface: #0C1C17;
+  --text: #E9EAEB;
+  --lantern: #E2B866;
+  --graphite: #282E31;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#dream-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#overlay {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.header h1 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--lantern);
+  margin-bottom: 0.25rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #BDCEBC;
+}
+
+.status-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #909653;
+  box-shadow: 0 0 8px #909653;
+}
+
+.metrics {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: rgba(12, 28, 23, 0.75);
+  border: 1px solid rgba(226, 184, 102, 0.25);
+  backdrop-filter: blur(12px);
+  font-size: 0.8rem;
+}
+
+.metric .label {
+  color: #77917F;
+  margin-right: 0.25rem;
+}
+
+.metric #fps-counter {
+  color: #909653;
+  font-weight: 600;
+}
+
+.metric .val {
+  color: var(--lantern);
+}

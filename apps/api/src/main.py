@@ -1,0 +1,50 @@
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .config import settings
+from .logging import SafeRequestLoggingMiddleware, logger, setup_logging
+from .routes.health import router as health_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_logging(settings.LOG_LEVEL)
+    logger.info("The Dream Machine API starting up", extra={"environment": settings.ENVIRONMENT})
+    yield
+    logger.info("The Dream Machine API shutting down")
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="The Dream Machine API",
+        version="0.1.0",
+        description="Backend API for The Dream Machine - turning dream fragments into stories, reflections, and 3D films.",
+        lifespan=lifespan,
+    )
+
+    # CORS configuration
+    origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins or ["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Safe structured logging middleware (NEVER logs bodies or dream text)
+    app.add_middleware(SafeRequestLoggingMiddleware)
+
+    # Mount routers
+    app.include_router(health_router)
+
+    return app
+
+
+app = create_app()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("apps.api.src.main:app", host="0.0.0.0", port=8000, reload=True)

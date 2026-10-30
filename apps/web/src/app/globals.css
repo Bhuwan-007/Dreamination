@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root, [data-theme="night"] {
+  --bg: #090D11;
+  --surface: #0C1C17;
+  --surface-raised: #151A1E;
+  --border: #282E31;
+  --hairline: rgba(226, 184, 102, 0.28);
+  --text: #E9EAEB;
+  --text-muted: #BDCEBC;
+  --text-subtle: #77917F;
+  --accent: #E2B866;
+  --accent-soft: #F3DDA6;
+  --accent-deep: #B58A3C;
+  --link: #559CA9;
+  --success: #909653;
+  --danger: #C9747C;
+  --focus: #F3DDA6;
+}
+
+[data-theme="dawn"] {
+  --bg: #EEF2EF;
+  --surface: #E1E8E3;
+  --surface-raised: #F6F8F6;
+  --border: #C8D3CB;
+  --hairline: rgba(138, 100, 34, 0.35);
+  --text: #0C1C17;
+  --text-muted: #3A5248;
+  --text-subtle: #556F60;
+  --accent: #8A6422;
+  --accent-soft: #B58A3C;
+  --accent-deep: #6B4D18;
+  --link: #2F5B4D;
+  --success: #2F5B4D;
+  --danger: #9C4650;
+  --focus: #8A6422;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-instrument, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Subtle background grain simulation */
+.bg-grain {
+  background-image: radial-gradient(rgba(226, 184, 102, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Dream Machine — 3D Dream Player Spike</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="overlay">
+        <div class="header">
+          <h1>THE DREAM MACHINE · 3D PLAYER</h1>
+          <div class="status-badge"><span class="dot"></span> 30+ FPS Target · WebGL</div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><span class="label">FPS:</span> <span id="fps-counter">60</span></div>
+          <div class="metric"><span class="label">Triangles:</span> <span id="poly-counter">12</span></div>
+          <div class="metric"><span class="label">Style:</span> <span class="val">nocturne_toon</span></div>
+        </div>
+      </div>
+      <canvas id="dream-canvas"></canvas>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

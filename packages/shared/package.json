@@ -1,0 +1,13 @@
+{
+  "name": "@dream-machine/shared",
+  "version": "0.1.0",
+  "description": "Shared TypeScript types and schemas for The Dream Machine",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
