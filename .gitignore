@@ -52,7 +52,7 @@ htmlcov/
 *.key
 
 # AI Models & Heavy Binary Weights (never commit models)
-models/
+/models/
 *.onnx
 *.safetensors
 *.bin
@@ -90,4 +90,4 @@ $RECYCLE.BIN/
 logs/
 
 # Verification Reports
-PHASE2_VERIFICATION_REPORT.md
+*VERIFICATION_REPORT.md

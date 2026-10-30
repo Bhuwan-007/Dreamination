@@ -13,6 +13,7 @@ const newsreader = Newsreader({
   variable: "--font-newsreader",
   display: "swap",
   style: ["normal", "italic"],
+  adjustFontFallback: false,
 });
 
 const instrumentSans = Instrument_Sans({

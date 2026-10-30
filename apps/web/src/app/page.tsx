@@ -52,11 +52,11 @@ export default function Home() {
         {/* Action Controls */}
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <a
-            href="#capture"
+            href="/capture"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-lantern text-void font-medium tracking-wide shadow-lantern hover:bg-lantern-soft transition-all duration-300"
           >
             <Compass className="w-5 h-5" />
-            <span>Open the Door</span>
+            <span>Enter Capture Sanctum</span>
           </a>
 
           <a
