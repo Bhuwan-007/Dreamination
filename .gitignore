@@ -1,27 +1,35 @@
-# Environment & Secrets
-.env
-.env.local
-.env.*.local
-*.pem
-*.key
+# Dependencies
+**/node_modules/
+node_modules/
 
-# Python
+# Next.js Build Outputs
+**/.next/
+.next/
+out/
+
+# Vite / Build Outputs
+**/dist/
+dist/
+*.tsbuildinfo
+
+# Python Virtual Environments & Packages
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+**/__pycache__/
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-.venv/
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -30,25 +38,18 @@ wheels/
 .installed.cfg
 *.egg
 .pytest_cache/
+**/.pytest_cache/
 .coverage
 .coverage.*
 htmlcov/
 .cache/
 
-# Node.js & Package Managers
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Next.js
-.next/
-out/
-
-# Vite / Build outputs
-dist/
-*.tsbuildinfo
+# Environment & Secret Files
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
 
 # AI Models & Heavy Binary Weights (never commit models)
 models/
@@ -80,7 +81,6 @@ minio_data/
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
-.vscode/
 .idea/
 *.swp
 *.swo
