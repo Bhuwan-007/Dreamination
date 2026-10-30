@@ -9,9 +9,8 @@ Integration tests for authentication endpoints:
 """
 
 import pytest
-from httpx import AsyncClient
-
 from apps.api.src.auth import SESSION_COOKIE_NAME
+from httpx import AsyncClient
 
 pytestmark = pytest.mark.anyio
 

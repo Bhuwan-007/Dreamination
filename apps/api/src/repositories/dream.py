@@ -11,13 +11,10 @@ from datetime import datetime
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from ..crypto import decrypt_field, encrypt_field
-from ..models.dream import Dream, DreamStatus, DreamVersion, DreamVersionMode
+from ..models.dream import Dream, DreamStatus, DreamVersion
 from ..models.entity import DreamEntityLink, Entity
-from ..models.render_job import RenderJob, RenderJobStatus
 from .base import BaseScopedRepository, RecordNotFoundError, ScopedAccessError
 
 
@@ -162,6 +159,90 @@ class DreamRepository(BaseScopedRepository[Dream]):
         )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_version(self, version_id: uuid.UUID) -> DreamVersion | None:
+        """Fetches a version ensuring its parent dream belongs to self.user_id."""
+        stmt = (
+            sa.select(DreamVersion)
+            .join(Dream, DreamVersion.dream_id == Dream.id)
+            .where(
+                DreamVersion.id == version_id,
+                Dream.user_id == self.user_id,
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
+    async def get_latest_version(
+        self,
+        dream_id: uuid.UUID,
+        mode: str | None = None,
+    ) -> DreamVersion | None:
+        """Fetches the latest version for a dream, optionally filtered by mode."""
+        dream = await self.get_by_id(dream_id)
+        if dream is None:
+            return None
+
+        stmt = sa.select(DreamVersion).where(DreamVersion.dream_id == dream.id)
+        if mode:
+            stmt = stmt.where(DreamVersion.mode == mode)
+        stmt = stmt.order_by(DreamVersion.created_at.desc())
+
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
+    async def update_version(
+        self,
+        version_id: uuid.UUID,
+        story_json: dict[str, Any] | None = None,
+        gap_fills_json: list[Any] | None = None,
+        is_approved: bool | None = None,
+    ) -> DreamVersion | None:
+        """Updates a version after verifying user ownership."""
+        version = await self.get_version(version_id)
+        if version is None:
+            return None
+
+        if story_json is not None:
+            version.story_json = story_json
+        if gap_fills_json is not None:
+            version.gap_fills_json = gap_fills_json
+        if is_approved is not None:
+            version.is_approved = is_approved
+
+        await self.db.flush()
+        return version
+
+    async def approve_version(
+        self,
+        dream_id: uuid.UUID,
+        version_id: uuid.UUID,
+    ) -> DreamVersion:
+        """
+        Approves a specific version for a dream, unapproving previous versions
+        and advancing dream status to APPROVED.
+        """
+        dream = await self.get_by_id(dream_id)
+        if dream is None:
+            raise ScopedAccessError("Dream does not exist or belongs to another user.")
+
+        target_version = await self.get_version(version_id)
+        if target_version is None or target_version.dream_id != dream.id:
+            raise ScopedAccessError("Version does not belong to this dream or user.")
+
+        # Unapprove all versions for this dream
+        unapprove_stmt = (
+            sa.update(DreamVersion)
+            .where(DreamVersion.dream_id == dream.id)
+            .values(is_approved=False)
+        )
+        await self.db.execute(unapprove_stmt)
+
+        # Mark target approved
+        target_version.is_approved = True
+        dream.status = DreamStatus.APPROVED.value
+        await self.db.flush()
+        return target_version
 
     async def link_entity(
         self,

@@ -10,6 +10,7 @@ Integration tests for Dream Capture, Audio Transcription, and Follow-up Question
 
 import io
 import uuid
+
 import pytest
 from httpx import AsyncClient
 

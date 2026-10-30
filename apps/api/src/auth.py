@@ -5,15 +5,14 @@ Authentication utilities, token issuance, and dependency injectors.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
-from fastapi import Cookie, Depends, HTTPException, Header, Request, status
+from fastapi import Cookie, Depends, Header, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
-from .crypto import hash_password, verify_password
 from .database import get_db
 from .models.user import User
 from .repositories.user import UserRepository
@@ -26,7 +25,7 @@ DEFAULT_EXPIRY_DAYS = 7
 def create_access_token(user_id: uuid.UUID | str, email: str, expires_delta: timedelta | None = None) -> str:
     """Creates a signed JWT access token for user sessions."""
     delta = expires_delta or timedelta(days=DEFAULT_EXPIRY_DAYS)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
         "email": email,

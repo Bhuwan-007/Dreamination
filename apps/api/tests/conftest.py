@@ -4,18 +4,18 @@ Uses an in-memory SQLite database via aiosqlite with StaticPool for fast, isolat
 """
 
 from collections.abc import AsyncGenerator
+
 import pytest
+from apps.api.src.database import get_db
+from apps.api.src.main import create_app
+from apps.api.src.models.base import Base
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.pool import StaticPool
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-
-from apps.api.src.database import get_db
-from apps.api.src.main import create_app
-from apps.api.src.models.base import Base
+from sqlalchemy.pool import StaticPool
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 

@@ -10,23 +10,34 @@ Dreams API router:
 
 from __future__ import annotations
 
-import json
 import uuid
 from datetime import datetime
-from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_user
 from ..database import get_db
-from ..followups import FollowupQuestion, FollowupResponse, generate_followup_questions
+from ..followups import FollowupResponse, generate_followup_questions
 from ..models.dream import DreamStatus
 from ..models.user import User
 from ..repositories.dream import DreamRepository
 from ..schemas.extraction import ExtractionOutput
+from ..schemas.reconstruction import (
+    ApproveDreamRequest,
+    ApproveDreamResponse,
+    DreamVersionResponse,
+    ReconstructDreamRequest,
+    ReconstructedScene,
+    ReconstructionOutput,
+    SceneRepairRequest,
+)
 from ..stages.extract import run_extraction_and_ingest
+from ..stages.reconstruct import (
+    run_reconstruction_pipeline,
+    run_scene_repair_pipeline,
+)
 from ..storage import storage_service
 from ..transcription import get_transcription_provider
 
@@ -299,6 +310,161 @@ async def extract_dream(
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Extraction failed: {str(exc)}",
+            detail=f"Extraction failed: {exc!s}",
+        ) from exc
+
+
+# --- Reconstruction & Review Endpoints (Prompt P3 & P4) ---
+
+@router.post("/{dream_id}/reconstruct", response_model=DreamVersionResponse)
+async def reconstruct_dream(
+    dream_id: uuid.UUID,
+    payload: ReconstructDreamRequest = ReconstructDreamRequest(),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> DreamVersionResponse:
+    """
+    Reconstructs the dream into a 5-8 scene story in 'faithful' or 'authored' mode.
+    Every inferred sentence is tagged with confidence and an inference reason.
+    """
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    try:
+        version, story = await run_reconstruction_pipeline(
+            db=db,
+            dream_id=dream_id,
+            user_id=current_user.id,
+            mode=payload.mode,
+            history_snippets=payload.history_snippets,
+            force_rebuild=payload.force_rebuild,
+        )
+        return DreamVersionResponse(
+            id=version.id,
+            dream_id=version.dream_id,
+            mode=version.mode,
+            story=story,
+            is_approved=version.is_approved,
+            created_at=version.created_at,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Reconstruction failed: {exc!s}",
+        ) from exc
+
+
+@router.get("/{dream_id}/versions", response_model=list[DreamVersionResponse])
+async def list_dream_versions(
+    dream_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[DreamVersionResponse]:
+    """Lists all reconstructed story versions for this dream."""
+    repo = DreamRepository(db, current_user.id)
+    try:
+        versions = await repo.list_versions(dream_id)
+        result: list[DreamVersionResponse] = []
+        for v in versions:
+            story = ReconstructionOutput.model_validate(v.story_json)
+            result.append(
+                DreamVersionResponse(
+                    id=v.id,
+                    dream_id=v.dream_id,
+                    mode=v.mode,
+                    story=story,
+                    is_approved=v.is_approved,
+                    created_at=v.created_at,
+                )
+            )
+        return result
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Failed to fetch versions: {exc!s}",
+        ) from exc
+
+
+class SceneRepairResponse(BaseModel):
+    version_id: uuid.UUID
+    scene: ReconstructedScene
+
+
+@router.patch("/{dream_id}/scenes/{scene_id}", response_model=SceneRepairResponse)
+async def repair_scene(
+    dream_id: uuid.UUID,
+    scene_id: int,
+    payload: SceneRepairRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> SceneRepairResponse:
+    """
+    Regenerates ONLY the single targeted scene using the user's correction
+    as ground truth, maintaining emotional continuity with neighboring scenes.
+    """
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    try:
+        updated_version, repaired_scene = await run_scene_repair_pipeline(
+            db=db,
+            dream_id=dream_id,
+            user_id=current_user.id,
+            scene_id=scene_id,
+            user_correction=payload.correction,
+        )
+        return SceneRepairResponse(
+            version_id=updated_version.id,
+            scene=repaired_scene,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Scene repair failed: {exc!s}",
+        ) from exc
+
+
+@router.post("/{dream_id}/approve", response_model=ApproveDreamResponse)
+async def approve_dream(
+    dream_id: uuid.UUID,
+    payload: ApproveDreamRequest = ApproveDreamRequest(),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ApproveDreamResponse:
+    """
+    Approves the reconstructed story version, advancing dream status to APPROVED.
+    Ready for 3D world composition and director script generation.
+    """
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    version_id = payload.version_id
+    if not version_id:
+        latest = await repo.get_latest_version(dream_id)
+        if not latest:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No story version exists to approve. Reconstruct the dream first.",
+            )
+        version_id = latest.id
+
+    try:
+        approved_version = await repo.approve_version(dream_id, version_id)
+        return ApproveDreamResponse(
+            status=DreamStatus.APPROVED.value,
+            dream_id=dream_id,
+            version_id=approved_version.id,
+            message="Dream approved and ready for 3D world composition.",
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Approval failed: {exc!s}",
         ) from exc
 

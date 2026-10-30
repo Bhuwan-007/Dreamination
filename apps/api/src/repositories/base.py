@@ -6,7 +6,7 @@ Rule: Every database query on user-owned tables MUST be filtered by user_id.
 from __future__ import annotations
 
 import uuid
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession

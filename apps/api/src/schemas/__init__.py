@@ -9,12 +9,34 @@ from .extraction import (
     ExtractedTransition,
     ExtractionOutput,
 )
+from .reconstruction import (
+    ApproveDreamRequest,
+    ApproveDreamResponse,
+    BeatItem,
+    DialogueItem,
+    DreamVersionResponse,
+    ReconstructDreamRequest,
+    ReconstructedScene,
+    ReconstructionOutput,
+    SceneRepairRequest,
+    SceneUpdateRequest,
+)
 
 __all__ = [
+    "ApproveDreamRequest",
+    "ApproveDreamResponse",
+    "BeatItem",
+    "DialogueItem",
     "DreamFragment",
-    "ExtractedEntity",
+    "DreamVersionResponse",
     "ExtractedEmotion",
+    "ExtractedEntity",
     "ExtractedTransition",
     "ExtractionOutput",
+    "ReconstructDreamRequest",
+    "ReconstructedScene",
+    "ReconstructionOutput",
+    "SceneRepairRequest",
+    "SceneUpdateRequest",
 ]
 

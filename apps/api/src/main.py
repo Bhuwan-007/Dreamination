@@ -14,6 +14,17 @@ from .routes.health import router as health_router
 async def lifespan(app: FastAPI):
     setup_logging(settings.LOG_LEVEL)
     logger.info("The Dream Machine API starting up", extra={"environment": settings.ENVIRONMENT})
+
+    # Auto-initialize database tables for local runs
+    try:
+        from .database import engine
+        from .models.base import Base
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database schema initialized.")
+    except Exception as exc:
+        logger.warning(f"Database schema auto-init warning: {exc}")
+
     yield
     logger.info("The Dream Machine API shutting down")
 

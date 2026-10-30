@@ -7,6 +7,7 @@ emotions with intensities, and dream-logic transitions.
 from __future__ import annotations
 
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -51,17 +52,17 @@ class ExtractedEmotion(BaseModel):
 class ExtractedTransition(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    from_fragment: str = Field(
+    from_fragment: str | None = Field(
         default="f1",
         alias="from",
         description="Source fragment ID",
     )
-    to_fragment: str = Field(
+    to_fragment: str | None = Field(
         default="f2",
         alias="to",
         description="Target fragment ID",
     )
-    type: Literal["cut", "morph", "submerge", "fall", "unexplained"] = Field(
+    type: str | None = Field(
         default="unexplained",
         description="Dream-logic transition mechanism",
     )

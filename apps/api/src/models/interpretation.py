@@ -17,7 +17,6 @@ from .base import Base, utc_now
 
 if TYPE_CHECKING:
     from .dream import Dream
-    from .user import User
 
 
 class InterpretationFeedback(str, enum.Enum):

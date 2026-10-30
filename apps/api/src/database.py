@@ -15,12 +15,21 @@ from sqlalchemy.ext.asyncio import (
 
 from .config import settings
 
+is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+engine_kwargs: dict = {
+    "echo": False,
+    "future": True,
+}
+
+if is_sqlite:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs["pool_pre_ping"] = True
+
 # Engine configuration
 engine: AsyncEngine = create_async_engine(
     settings.DATABASE_URL,
-    echo=False,
-    future=True,
-    pool_pre_ping=True,
+    **engine_kwargs,
 )
 
 # Async session factory

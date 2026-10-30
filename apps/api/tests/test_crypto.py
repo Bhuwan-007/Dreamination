@@ -8,8 +8,8 @@ Unit tests for cryptographic engine:
 """
 
 import uuid
-import pytest
 
+import pytest
 from apps.api.src.crypto import (
     DecryptionFailedError,
     decrypt_field,

@@ -1,0 +1,14 @@
+target-version = "py312"
+line-length = 120
+
+[lint]
+select = ["E", "F", "I", "UP"]
+ignore = [
+    "E501",   # line length
+    "B008",   # FastAPI Depends/Header/Cookie/File
+    "UP042",  # str, enum.Enum required for SQLAlchemy models
+    "UP046",  # Generic[ModelT]
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["F401", "E501"]

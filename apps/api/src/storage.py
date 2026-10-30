@@ -5,11 +5,9 @@ Supports local directory storage with fallback when MinIO is not connected.
 
 from __future__ import annotations
 
-import os
 import uuid
 from pathlib import Path
 
-from .config import settings
 from .logging import logger
 
 LOCAL_STORAGE_DIR = Path("data/storage/audio")

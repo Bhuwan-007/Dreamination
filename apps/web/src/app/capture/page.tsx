@@ -654,18 +654,26 @@ export default function DreamCapturePage() {
                   setRecordedAnswers([]);
                   setIsComplete(false);
                 }}
-                className="px-5 py-3 rounded-xl border border-graphite text-xs text-mist hover:text-cloud flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl border border-graphite text-xs text-mist hover:text-cloud flex items-center gap-2"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>Capture Another Dream</span>
+                <span>Capture Another</span>
               </button>
 
               <Link
-                href="/"
-                className="px-6 py-3 rounded-xl bg-lantern text-void font-medium text-xs hover:bg-lantern-soft flex items-center gap-2"
+                href={`/dreams/${capturedDreamId || "latest"}/review`}
+                className="px-6 py-2.5 rounded-xl bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft flex items-center gap-2 shadow-lantern"
               >
-                <span>Return to Sanctum</span>
+                <Sparkles className="w-4 h-4" />
+                <span>Weave & Review Story</span>
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                href={`/dreams/${capturedDreamId || "latest"}/review?express=true`}
+                className="px-4 py-2.5 rounded-xl border border-hairline bg-slate text-xs text-mist hover:text-cloud flex items-center gap-2"
+              >
+                <span>Watch in 3D (Express)</span>
               </Link>
             </div>
           </div>

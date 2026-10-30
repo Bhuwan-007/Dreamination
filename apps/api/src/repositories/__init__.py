@@ -9,11 +9,11 @@ from .user import UserRepository
 
 __all__ = [
     "BaseScopedRepository",
+    "DecryptedDream",
+    "DreamRepository",
+    "EntityRepository",
     "RecordNotFoundError",
     "ScopedAccessError",
-    "DreamRepository",
-    "DecryptedDream",
-    "EntityRepository",
     "UserRepository",
 ]
 

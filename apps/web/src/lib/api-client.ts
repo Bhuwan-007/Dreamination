@@ -53,6 +53,49 @@ export interface FollowupResponse {
   questions: FollowupQuestion[];
 }
 
+export interface BeatItem {
+  text: string;
+  source: "user" | "inferred";
+  inference_reason: string | null;
+  confidence: number;
+}
+
+export interface DialogueItem {
+  speaker: string;
+  line: string;
+  emotion: string;
+  source: "user" | "inferred";
+}
+
+export interface ReconstructedScene {
+  scene_id: number;
+  heading: string;
+  beats: BeatItem[];
+  dialogue: DialogueItem[];
+}
+
+export interface ReconstructionOutput {
+  title: string;
+  mode: "faithful" | "authored";
+  scenes: ReconstructedScene[];
+}
+
+export interface DreamVersionResponse {
+  id: string;
+  dream_id: string;
+  mode: string;
+  story: ReconstructionOutput;
+  is_approved: boolean;
+  created_at: string;
+}
+
+export interface ApproveDreamResponse {
+  status: string;
+  dream_id: string;
+  version_id: string;
+  message: string;
+}
+
 export interface ApiClientConfig {
   baseUrl?: string;
 }
@@ -97,7 +140,28 @@ export class DreamApiClient {
     return this.token;
   }
 
+  async ensureAuthenticated(): Promise<string | null> {
+    if (this.getToken()) {
+      return this.getToken();
+    }
+    try {
+      const res = await this.login("dreamer@local.dev", "DreamMaster123!");
+      return res.access_token;
+    } catch {
+      try {
+        const res = await this.signup("dreamer@local.dev", "DreamMaster123!");
+        return res.access_token;
+      } catch {
+        return null;
+      }
+    }
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    if (!endpoint.startsWith("/auth") && !endpoint.startsWith("/health") && !this.getToken()) {
+      await this.ensureAuthenticated();
+    }
+
     const url = `${this.baseUrl}${endpoint}`;
     const token = this.getToken();
 
@@ -213,6 +277,46 @@ export class DreamApiClient {
     return this.request<DreamResponse>(`/dreams/${dreamId}/answers`, {
       method: "POST",
       body: JSON.stringify({ answers }),
+    });
+  }
+
+  // --- Reconstruction & Review (Phase 5) ---
+  async reconstructDream(
+    dreamId: string,
+    mode: "faithful" | "authored" = "faithful",
+    forceRebuild = false
+  ): Promise<DreamVersionResponse> {
+    return this.request<DreamVersionResponse>(`/dreams/${dreamId}/reconstruct`, {
+      method: "POST",
+      body: JSON.stringify({ mode, force_rebuild: forceRebuild }),
+    });
+  }
+
+  async listDreamVersions(dreamId: string): Promise<DreamVersionResponse[]> {
+    return this.request<DreamVersionResponse[]>(`/dreams/${dreamId}/versions`);
+  }
+
+  async repairScene(
+    dreamId: string,
+    sceneId: number,
+    correction: string
+  ): Promise<{ version_id: string; scene: ReconstructedScene }> {
+    return this.request<{ version_id: string; scene: ReconstructedScene }>(
+      `/dreams/${dreamId}/scenes/${sceneId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ correction }),
+      }
+    );
+  }
+
+  async approveDream(
+    dreamId: string,
+    versionId?: string
+  ): Promise<ApproveDreamResponse> {
+    return this.request<ApproveDreamResponse>(`/dreams/${dreamId}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ version_id: versionId }),
     });
   }
 }

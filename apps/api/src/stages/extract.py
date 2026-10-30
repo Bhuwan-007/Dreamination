@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..logging import logger
 from ..models.dream import DreamStatus
-from ..models.entity import Entity, EntityType
+from ..models.entity import Entity
 from ..repositories.dream import DreamRepository
 from ..repositories.entity import EntityRepository
 from ..schemas.extraction import (
@@ -234,9 +234,27 @@ class ExtractionService:
         known_entities: list[dict[str, Any]] | None = None,
     ) -> ExtractionOutput:
         """
-        Executes faithful dream structure extraction.
+        Executes faithful dream structure extraction via LLM (Gemini -> Ollama),
+        falling back to deterministic extraction if LLM is unavailable.
         """
-        return self._fallback_extract(notes, answers, known_entities)
+        try:
+            from ..providers.llm import complete_json
+
+            template = self.prompt_path.read_text(encoding="utf-8")
+            prompt = (
+                template
+                .replace("{known_entities}", json.dumps(known_entities or []))
+                .replace("{notes}", notes)
+                .replace("{answers}", answers)
+            )
+
+            parsed = await complete_json(prompt)
+            return ExtractionOutput.model_validate(parsed)
+        except Exception as exc:
+            logger.warning(
+                f"LLM extraction failed ({exc}); invoking deterministic extraction fallback."
+            )
+            return self._fallback_extract(notes, answers, known_entities)
 
 
 async def run_extraction_and_ingest(
@@ -304,8 +322,13 @@ async def run_extraction_and_ingest(
 
         resolved_entities.append(matched_entity)
 
-        # Step D: Link entity to dream in dream_entity_links
-        try:
+    # Step D: Link entity to dream in dream_entity_links if not already linked
+    existing_links = await dream_repo.list_linked_entities(dream_id)
+    existing_linked_ids = {link.entity_id for link, _ in existing_links}
+
+    for idx, extracted in enumerate(extraction_output.entities):
+        matched_entity = resolved_entities[idx]
+        if matched_entity.id not in existing_linked_ids:
             await dream_repo.link_entity(
                 dream_id=dream_id,
                 entity_id=matched_entity.id,
@@ -313,9 +336,7 @@ async def run_extraction_and_ingest(
                 salience=extracted.salience,
                 emotion_valence=0.0,
             )
-        except Exception:
-            # Avoid duplicate links if already linked
-            pass
+            existing_linked_ids.add(matched_entity.id)
 
     # 4. Link entity edges for co-occurring entities
     for i in range(len(resolved_entities) - 1):

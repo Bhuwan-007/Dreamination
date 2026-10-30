@@ -6,8 +6,6 @@ Never suggests answers, never leads, and never asks about waking life.
 
 from __future__ import annotations
 
-import json
-import re
 from pathlib import Path
 from typing import Literal
 
@@ -21,7 +19,10 @@ PROMPT_FILE = Path(__file__).parent.parent / "prompts" / "followups_v1.md"
 class FollowupQuestion(BaseModel):
     id: str = Field(description="Unique identifier for question, e.g. q1")
     text: str = Field(description="Gentle, sensory question inquiring about feeling or atmosphere")
-    targets: Literal["emotion", "sensation", "character", "transition", "ending"]
+    targets: str = Field(
+        default="sensation",
+        description="Target category (emotion, sensation, character, transition, ending)",
+    )
 
 
 class FollowupResponse(BaseModel):
@@ -75,6 +76,7 @@ def _generate_fallback_questions(dream_text: str) -> list[FollowupQuestion]:
 async def generate_followup_questions(dream_text: str) -> list[FollowupQuestion]:
     """
     Generates 0 to 3 gentle, non-leading follow-up questions from dream notes.
+    Uses LLM ladder (Gemini -> Ollama) with deterministic sensory fallback.
     """
     if not dream_text or len(dream_text.strip()) < 15:
         return [
@@ -85,9 +87,15 @@ async def generate_followup_questions(dream_text: str) -> list[FollowupQuestion]
             )
         ]
 
-    # In production with GEMINI_API_KEY / LLM configured, call model here.
-    # When keys are absent, fallback to deterministic sensory heuristics.
-    questions = _generate_fallback_questions(dream_text)
-    logger.info(f"Generated {len(questions)} follow-up questions")
-    return questions
+    try:
+        from .providers.llm import complete_json
+
+        template = PROMPT_FILE.read_text(encoding="utf-8")
+        prompt = template.replace("{notes}", dream_text)
+        parsed = await complete_json(prompt)
+        res = FollowupResponse.model_validate(parsed)
+        return res.questions[:3]
+    except Exception as exc:
+        logger.info(f"LLM follow-up generation failed ({exc}); falling back to heuristic questions.")
+        return _generate_fallback_questions(dream_text)
 

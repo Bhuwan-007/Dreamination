@@ -53,7 +53,7 @@ def derive_user_key(user_id: str | UUID, master_key: bytes | str | None = None) 
         algorithm=hashes.SHA256(),
         length=32,
         salt=HKDF_SALT,
-        info=f"user:{uid_str}".encode("utf-8"),
+        info=f"user:{uid_str}".encode(),
     )
     return hkdf.derive(raw_master)
 

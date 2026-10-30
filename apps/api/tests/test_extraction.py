@@ -8,12 +8,11 @@ Includes:
 """
 
 import uuid
+
 import pytest
+from apps.api.src.stages.extract import ExtractionService
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from apps.api.src.models.entity import Entity, EntityEdge
-from apps.api.src.stages.extract import ExtractionService, run_extraction_and_ingest
 
 pytestmark = pytest.mark.anyio
 

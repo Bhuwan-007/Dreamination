@@ -71,7 +71,10 @@ packages/dream-player/public/animations/*
 *.wav
 *.mp3
 
-# Local Docker / Storage Mounts
+# Local Databases & Storage Mounts
+*.db
+*.sqlite
+*.sqlite3
 postgres_data/
 redis_data/
 minio_data/

@@ -11,7 +11,6 @@ import io
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
 
 from .logging import logger
 
@@ -130,7 +129,7 @@ class MockOrLocalTranscriptionProvider(TranscriptionProvider):
 def get_transcription_provider() -> TranscriptionProvider:
     """Factory selecting the best available transcription provider."""
     try:
-        import faster_whisper
+        import faster_whisper  # noqa: F401
         return FasterWhisperTranscriptionProvider()
     except ImportError:
         return MockOrLocalTranscriptionProvider()

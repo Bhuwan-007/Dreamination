@@ -6,13 +6,11 @@ Manages personal dream graph nodes, edges, and symbol lexicon distributions.
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.entity import Entity, EntityEdge, EntityType, SymbolMeaning
-from .base import BaseScopedRepository, RecordNotFoundError, ScopedAccessError
+from ..models.entity import Entity, EntityEdge, SymbolMeaning
+from .base import BaseScopedRepository, ScopedAccessError
 
 
 class EntityRepository(BaseScopedRepository[Entity]):

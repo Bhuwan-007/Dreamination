@@ -5,16 +5,15 @@ Enforces Field-Level Encryption on dream text columns at rest in the database.
 """
 
 import uuid
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import pytest
 from apps.api.src.crypto import hash_password
-from apps.api.src.models.dream import Dream, DreamStatus
-from apps.api.src.models.entity import Entity, EntityType
+from apps.api.src.models.entity import EntityType
 from apps.api.src.repositories.base import RecordNotFoundError, ScopedAccessError
 from apps.api.src.repositories.dream import DreamRepository
 from apps.api.src.repositories.entity import EntityRepository
 from apps.api.src.repositories.user import UserRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.anyio
 

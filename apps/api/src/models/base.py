@@ -2,8 +2,7 @@
 Base declarative class and common model utilities.
 """
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import sqlalchemy as sa
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -11,12 +10,11 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 def utc_now() -> datetime:
     """Returns current UTC timestamp with timezone."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Base(DeclarativeBase):
     """SQLAlchemy declarative base class."""
-    pass
 
 
 class TimestampMixin:
