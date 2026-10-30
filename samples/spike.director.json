@@ -1,0 +1,246 @@
+{
+  "title": "The Clockless Tide",
+  "style_id": "nocturne_toon",
+  "scenes": [
+    {
+      "scene_id": 1,
+      "transition_in": "dissolve",
+      "world": {
+        "kit": "void_meadow",
+        "sky": "night_halo",
+        "light": "moonlit_lantern",
+        "fog": {
+          "density": 0.035,
+          "color": "#0C1C17"
+        },
+        "props": [
+          { "id": "stone_arch", "anchor": "door_far" },
+          { "id": "floating_clock_1", "anchor": "left_sky" },
+          { "id": "floating_clock_2", "anchor": "right_sky" },
+          { "id": "lantern_pillar", "anchor": "center_left" }
+        ],
+        "effects": []
+      },
+      "cast": [
+        {
+          "entity_id": "e_traveler_01",
+          "name": "Traveler",
+          "spawn": "door_far",
+          "face_visibility": "shadowed"
+        }
+      ],
+      "beats": [
+        {
+          "t": 0.0,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "wide", "duration": 4.5 }
+        },
+        {
+          "t": 0.8,
+          "actor": "Traveler",
+          "action": "walk_to",
+          "args": { "anchor": "center", "speed": "slow", "duration": 6.5 }
+        },
+        {
+          "t": 2.0,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "tracking", "duration": 5.5 }
+        }
+      ],
+      "narration": null,
+      "ambient": "quiet_void_wind",
+      "sound_motif": null
+    },
+    {
+      "scene_id": 2,
+      "transition_in": "cut",
+      "world": {
+        "kit": "void_meadow",
+        "sky": "night_halo",
+        "light": "moonlit_lantern",
+        "fog": {
+          "density": 0.038,
+          "color": "#0C1C17"
+        },
+        "props": [
+          { "id": "stone_arch", "anchor": "door_far" },
+          { "id": "floating_clock_1", "anchor": "left_sky" },
+          { "id": "floating_clock_2", "anchor": "right_sky" },
+          { "id": "lantern_pillar", "anchor": "center_left" }
+        ],
+        "effects": []
+      },
+      "cast": [
+        {
+          "entity_id": "e_traveler_01",
+          "name": "Traveler",
+          "spawn": "center",
+          "face_visibility": "full"
+        }
+      ],
+      "beats": [
+        {
+          "t": 0.0,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "hero_low", "duration": 4.0 }
+        },
+        {
+          "t": 0.5,
+          "actor": "Traveler",
+          "action": "animate",
+          "args": { "clip": "look_around", "duration": 2.0 }
+        },
+        {
+          "t": 2.2,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "close_up", "duration": 5.0 }
+        },
+        {
+          "t": 2.6,
+          "actor": "Traveler",
+          "action": "speak",
+          "args": {
+            "line": "The tide is rising, but none of the clocks have hands.",
+            "emotion": "melancholic",
+            "duration": 4.2
+          }
+        }
+      ],
+      "narration": null,
+      "ambient": "quiet_void_wind",
+      "sound_motif": "ticking"
+    },
+    {
+      "scene_id": 3,
+      "transition_in": "cut",
+      "world": {
+        "kit": "void_meadow",
+        "sky": "night_halo",
+        "light": "moonlit_lantern",
+        "fog": {
+          "density": 0.045,
+          "color": "#0C1C17"
+        },
+        "props": [
+          { "id": "stone_arch", "anchor": "door_far" },
+          { "id": "floating_clock_1", "anchor": "left_sky" },
+          { "id": "floating_clock_2", "anchor": "right_sky" },
+          { "id": "lantern_pillar", "anchor": "center_left" }
+        ],
+        "effects": [
+          {
+            "type": "flood",
+            "at": 1.0,
+            "duration": 5.5,
+            "parameters": {
+              "water_level": 1.2,
+              "wave_speed": 1.2,
+              "wave_height": 0.08
+            }
+          },
+          {
+            "type": "float",
+            "at": 1.5,
+            "duration": 6.0,
+            "parameters": {
+              "targets": ["floating_clock_1", "floating_clock_2"],
+              "bob_amplitude": 0.25
+            }
+          }
+        ]
+      },
+      "cast": [
+        {
+          "entity_id": "e_traveler_01",
+          "name": "Traveler",
+          "spawn": "center",
+          "face_visibility": "shadowed"
+        }
+      ],
+      "beats": [
+        {
+          "t": 0.0,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "wide", "duration": 5.0 }
+        },
+        {
+          "t": 1.0,
+          "actor": "world",
+          "action": "effect",
+          "args": { "type": "flood", "duration": 5.5 }
+        },
+        {
+          "t": 2.5,
+          "actor": "Traveler",
+          "action": "animate",
+          "args": { "clip": "reach", "duration": 3.0 }
+        },
+        {
+          "t": 3.5,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "dolly_in", "duration": 4.5 }
+        }
+      ],
+      "narration": "Water filled the doorway, still and warm as breath.",
+      "ambient": "underwater_hum",
+      "sound_motif": "ticking"
+    },
+    {
+      "scene_id": 4,
+      "transition_in": "dissolve",
+      "world": {
+        "kit": "void_meadow",
+        "sky": "night_halo",
+        "light": "moonlit_lantern",
+        "fog": {
+          "density": 0.04,
+          "color": "#0C1C17"
+        },
+        "props": [
+          { "id": "stone_arch", "anchor": "door_far" },
+          { "id": "floating_clock_1", "anchor": "left_sky" },
+          { "id": "floating_clock_2", "anchor": "right_sky" }
+        ],
+        "effects": []
+      },
+      "cast": [
+        {
+          "entity_id": "e_traveler_01",
+          "name": "Traveler",
+          "spawn": "center",
+          "face_visibility": "shadowed"
+        }
+      ],
+      "beats": [
+        {
+          "t": 0.0,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "close_up", "duration": 4.0 }
+        },
+        {
+          "t": 1.5,
+          "actor": "camera",
+          "action": "shot",
+          "args": { "preset": "hero_low", "duration": 4.5 }
+        },
+        {
+          "t": 2.0,
+          "actor": "Traveler",
+          "action": "animate",
+          "args": { "clip": "idle", "duration": 4.0 }
+        }
+      ],
+      "narration": null,
+      "ambient": "quiet_void_wind",
+      "sound_motif": null
+    }
+  ]
+}
+

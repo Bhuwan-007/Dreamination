@@ -88,3 +88,6 @@ $RECYCLE.BIN/
 # Logs & Diagnostics
 *.log
 logs/
+
+# Verification Reports
+PHASE2_VERIFICATION_REPORT.md

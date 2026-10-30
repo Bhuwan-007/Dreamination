@@ -8,19 +8,63 @@
   </head>
   <body>
     <div id="app">
-      <div id="overlay">
-        <div class="header">
-          <h1>THE DREAM MACHINE · 3D PLAYER</h1>
-          <div class="status-badge"><span class="dot"></span> 30+ FPS Target · WebGL</div>
+      <!-- 3D Canvas -->
+      <canvas id="dream-canvas"></canvas>
+
+      <!-- Captions Overlay (Newsreader Italic) -->
+      <div id="caption-container" class="caption-container">
+        <p id="caption-text"></p>
+      </div>
+
+      <!-- Top Header Bar -->
+      <div id="overlay-header" class="overlay-panel top-bar">
+        <div class="brand">
+          <div class="halo-glyph"></div>
+          <div>
+            <h1>THE DREAM MACHINE</h1>
+            <div class="subtitle">3D Director Spike · "The Clockless Tide"</div>
+          </div>
         </div>
-        <div class="metrics">
-          <div class="metric"><span class="label">FPS:</span> <span id="fps-counter">60</span></div>
-          <div class="metric"><span class="label">Triangles:</span> <span id="poly-counter">12</span></div>
-          <div class="metric"><span class="label">Style:</span> <span class="val">nocturne_toon</span></div>
+
+        <div class="hud-stats">
+          <div class="stat"><span class="label">FPS:</span> <span id="fps-val" class="highlight">60</span></div>
+          <div class="stat"><span class="label">Shot:</span> <span id="shot-val">Wide</span></div>
+          <div class="stat"><span class="label">Scene:</span> <span id="scene-val">1/4</span></div>
+          <button id="sound-btn" class="icon-btn" title="Toggle Sound / Ambient Mute">🔊 Sound: ON</button>
         </div>
       </div>
-      <canvas id="dream-canvas"></canvas>
+
+      <!-- Bottom Cinematic Transport Bar -->
+      <div id="overlay-transport" class="overlay-panel bottom-bar">
+        <div class="transport-controls">
+          <button id="play-pause-btn" class="transport-btn play-btn" title="Play / Pause">▶ Play</button>
+          <button id="restart-btn" class="transport-btn" title="Restart">↺</button>
+          
+          <div class="timeline-container">
+            <input type="range" id="time-slider" min="0" max="38" step="0.05" value="0" />
+            <div class="time-display">
+              <span id="current-time">00:00</span> / <span id="total-time">00:38</span>
+            </div>
+          </div>
+
+          <button id="export-btn" class="export-btn" title="Export deterministic 1080p MP4 via WebCodecs">
+            Export 1080p MP4
+          </button>
+        </div>
+
+        <!-- Export Progress Overlay -->
+        <div id="export-progress-bar" class="export-progress-bar hidden">
+          <div class="progress-info">
+            <span id="export-status">Encoding 1080p video...</span>
+            <span id="export-percent">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
     </div>
+
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

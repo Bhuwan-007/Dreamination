@@ -1,9 +1,16 @@
 :root {
-  --bg: #090D11;
-  --surface: #0C1C17;
-  --text: #E9EAEB;
-  --lantern: #E2B866;
-  --graphite: #282E31;
+  --void: #090d11;
+  --forest-night: #0c1c17;
+  --slate: #151a1e;
+  --graphite: #282e31;
+  --ash: #4b5151;
+  --cloud: #e9eaeb;
+  --mist: #bdcebc;
+  --sage: #77917f;
+  --lantern: #e2b866;
+  --lantern-soft: #f3dda6;
+  --lake: #559ca9;
+  --hairline: rgba(226, 184, 102, 0.28);
 }
 
 * {
@@ -16,9 +23,9 @@ body, html {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--bg);
+  background-color: var(--void);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: var(--text);
+  color: var(--cloud);
 }
 
 #app {
@@ -33,63 +40,239 @@ body, html {
   display: block;
 }
 
-#overlay {
+/* Glass overlay panels */
+.overlay-panel {
   position: absolute;
-  top: 1.5rem;
   left: 1.5rem;
   right: 1.5rem;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.top-bar {
+  top: 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  pointer-events: none;
-  z-index: 10;
 }
 
-.header h1 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  color: var(--lantern);
-  margin-bottom: 0.25rem;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #BDCEBC;
-}
-
-.status-badge .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #909653;
-  box-shadow: 0 0 8px #909653;
-}
-
-.metrics {
+.brand {
   display: flex;
-  gap: 1.5rem;
-  padding: 0.5rem 1rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.halo-glyph {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--lantern);
+  box-shadow: 0 0 12px rgba(226, 184, 102, 0.4);
+}
+
+.brand h1 {
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  color: var(--lantern);
+  font-weight: 600;
+}
+
+.brand .subtitle {
+  font-size: 0.72rem;
+  color: var(--sage);
+  letter-spacing: 0.05em;
+}
+
+/* HUD stats pill */
+.hud-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.4rem 1rem;
   border-radius: 9999px;
   background: rgba(12, 28, 23, 0.75);
-  border: 1px solid rgba(226, 184, 102, 0.25);
+  border: 1px solid var(--hairline);
   backdrop-filter: blur(12px);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
-.metric .label {
-  color: #77917F;
+.hud-stats .label {
+  color: var(--sage);
   margin-right: 0.25rem;
 }
 
-.metric #fps-counter {
+.hud-stats .highlight {
   color: #909653;
   font-weight: 600;
 }
 
-.metric .val {
-  color: var(--lantern);
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--graphite);
+  color: var(--mist);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  border-color: var(--lantern);
+  color: var(--lantern-soft);
+}
+
+.icon-btn.muted {
+  border-color: rgba(220, 80, 80, 0.45);
+  color: #d88989;
+  background: rgba(45, 20, 20, 0.4);
+}
+
+/* Captions Overlay */
+.caption-container {
+  position: absolute;
+  bottom: 6rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+  padding: 0 2rem;
+}
+
+#caption-text {
+  display: inline-block;
+  font-family: "Georgia", "Newsreader", serif;
+  font-style: italic;
+  font-size: 1.4rem;
+  line-height: 1.5;
+  color: var(--cloud);
+  text-shadow: 0 2px 14px rgba(9, 13, 17, 0.95), 0 0 4px rgba(9, 13, 17, 0.8);
+  max-width: 60ch;
+  transition: opacity 0.3s ease;
+}
+
+/* Bottom Transport Bar */
+.bottom-bar {
+  bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transport-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  background: rgba(12, 28, 23, 0.85);
+  border: 1px solid var(--hairline);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 32px rgba(9, 13, 17, 0.6);
+}
+
+.transport-btn {
+  background: rgba(21, 26, 30, 0.8);
+  border: 1px solid var(--graphite);
+  color: var(--cloud);
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.2s ease;
+}
+
+.transport-btn:hover {
+  border-color: var(--lantern);
+  color: var(--lantern-soft);
+}
+
+.play-btn {
+  background: var(--lantern);
+  color: var(--void);
+  font-weight: 600;
+  border-color: var(--lantern);
+}
+
+.play-btn:hover {
+  background: var(--lantern-soft);
+  color: var(--void);
+}
+
+.timeline-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#time-slider {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--graphite);
+  border-radius: 2px;
+  cursor: pointer;
+  accent-color: var(--lantern);
+}
+
+.time-display {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--mist);
+  white-space: nowrap;
+}
+
+.export-btn {
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--lantern-soft);
+  padding: 0.4rem 1.1rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.export-btn:hover {
+  background: rgba(226, 184, 102, 0.15);
+  border-color: var(--lantern);
+}
+
+/* Export progress bar */
+.export-progress-bar {
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  background: rgba(12, 28, 23, 0.95);
+  border: 1px solid var(--lantern);
+  backdrop-filter: blur(16px);
+}
+
+.export-progress-bar.hidden {
+  display: none;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--cloud);
+  margin-bottom: 0.4rem;
+}
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: var(--graphite);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--lantern);
+  transition: width 0.15s ease;
 }
