@@ -1,7 +1,9 @@
-# Environment
+# Environment & Secrets
 .env
 .env.local
 .env.*.local
+*.pem
+*.key
 
 # Python
 __pycache__/
@@ -10,6 +12,8 @@ __pycache__/
 *.so
 .Python
 env/
+venv/
+.venv/
 build/
 develop-eggs/
 dist/
@@ -27,9 +31,11 @@ wheels/
 *.egg
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.cache/
 
-# Node.js
+# Node.js & Package Managers
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -40,17 +46,45 @@ yarn-error.log*
 .next/
 out/
 
-# Vite / 3D Player build output
+# Vite / Build outputs
 dist/
+*.tsbuildinfo
 
-# OS / IDE
+# AI Models & Heavy Binary Weights (never commit models)
+models/
+*.onnx
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Restricted external 3D assets (fetched on-demand by scripts, never committed per rules)
+packages/dream-player/public/avatars/*
+!packages/dream-player/public/avatars/.gitkeep
+packages/dream-player/public/animations/*
+!packages/dream-player/public/animations/.gitkeep
+
+# Render outputs & user media
+*.mp4
+*.webm
+*.wav
+*.mp3
+
+# Local Docker / Storage Mounts
+postgres_data/
+redis_data/
+minio_data/
+
+# OS / Editor Artifacts
 .DS_Store
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Temporary & Logs
+# Logs & Diagnostics
 *.log
 logs/
