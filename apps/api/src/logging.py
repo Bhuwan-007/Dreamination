@@ -2,7 +2,8 @@ import json
 import logging
 import sys
 import time
-from typing import Callable
+from collections.abc import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -84,5 +85,5 @@ class SafeRequestLoggingMiddleware(BaseHTTPMiddleware):
                 "status_code": 500,
                 "duration_ms": duration_ms,
             }
-            logger.error(f"{method} {path} failed: {type(exc).__name__}", extra=extra, exc_info=True)
+            logger.exception(f"{method} {path} failed: {type(exc).__name__}", extra=extra)
             raise
