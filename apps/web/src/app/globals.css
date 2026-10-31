@@ -4,38 +4,127 @@
 
 :root, [data-theme="night"] {
   --bg: #090D11;
+  --bg-rgb: 9 13 17;
   --surface: #0C1C17;
+  --surface-rgb: 12 28 23;
   --surface-raised: #151A1E;
+  --surface-raised-rgb: 21 26 30;
   --border: #282E31;
+  --border-rgb: 40 46 49;
   --hairline: rgba(226, 184, 102, 0.28);
+  --hairline-rgb: 226 184 102;
+  --hairline-alpha: 0.28;
   --text: #E9EAEB;
+  --text-rgb: 233 234 235;
   --text-muted: #BDCEBC;
+  --text-muted-rgb: 189 206 188;
   --text-subtle: #77917F;
+  --text-subtle-rgb: 119 145 127;
   --accent: #E2B866;
+  --accent-rgb: 226 184 102;
   --accent-soft: #F3DDA6;
+  --accent-soft-rgb: 243 221 166;
   --accent-deep: #B58A3C;
+  --accent-deep-rgb: 181 138 60;
   --link: #559CA9;
+  --link-rgb: 85 156 169;
   --success: #909653;
+  --success-rgb: 144 150 83;
   --danger: #C9747C;
+  --danger-rgb: 201 116 124;
   --focus: #F3DDA6;
+  --focus-rgb: 243 221 166;
+
+  /* Palette aliases channels (Night) */
+  --void-rgb: 9 13 17;
+  --forest-night-rgb: 12 28 23;
+  --slate-rgb: 21 26 30;
+  --graphite-rgb: 40 46 49;
+  --ash-rgb: 75 81 81;
+  --cloud-rgb: 233 234 235;
+  --mist-rgb: 189 206 188;
+  --sage-rgb: 119 145 127;
+  --lantern-rgb: 226 184 102;
+  --lantern-soft-rgb: 243 221 166;
+  --lantern-deep-rgb: 181 138 60;
+  --lake-rgb: 85 156 169;
+  --leaf-rgb: 144 150 83;
+  --dusk-rose-rgb: 201 116 124;
+  --viridian-rgb: 67 118 102;
+  --pine-rgb: 58 82 72;
+  --moss-rgb: 68 78 55;
+  --cobalt-rgb: 14 86 177;
+  --deepsea-rgb: 23 65 92;
+  --skyblue-rgb: 85 135 168;
+
+  /* Gradients from Design.md §3.4 */
+  --grad-night-dawn: linear-gradient(180deg, #090D11 0%, #0C1C17 35%, #3A5248 65%, #BDCEBC 88%, #F3DDA6 100%);
+  --grad-halo: conic-gradient(from 90deg, #E2B866, #F3DDA6, #559CA9, #437666, #E2B866);
+  --grad-water: radial-gradient(ellipse at 50% 0%, rgba(85, 156, 169, 0.25), transparent 70%);
 }
 
 [data-theme="dawn"] {
   --bg: #EEF2EF;
+  --bg-rgb: 238 242 239;
   --surface: #E1E8E3;
+  --surface-rgb: 225 232 227;
   --surface-raised: #F6F8F6;
+  --surface-raised-rgb: 246 248 246;
   --border: #C8D3CB;
+  --border-rgb: 200 211 203;
   --hairline: rgba(138, 100, 34, 0.35);
+  --hairline-rgb: 138 100 34;
+  --hairline-alpha: 0.35;
   --text: #0C1C17;
+  --text-rgb: 12 28 23;
   --text-muted: #3A5248;
+  --text-muted-rgb: 58 82 72;
   --text-subtle: #556F60;
+  --text-subtle-rgb: 85 111 96;
   --accent: #8A6422;
+  --accent-rgb: 138 100 34;
   --accent-soft: #B58A3C;
+  --accent-soft-rgb: 181 138 60;
   --accent-deep: #6B4D18;
+  --accent-deep-rgb: 107 77 24;
   --link: #2F5B4D;
+  --link-rgb: 47 91 77;
   --success: #2F5B4D;
+  --success-rgb: 47 91 77;
   --danger: #9C4650;
+  --danger-rgb: 156 70 80;
   --focus: #8A6422;
+  --focus-rgb: 138 100 34;
+
+  /* Palette aliases channels (Dawn) */
+  --void-rgb: 238 242 239;
+  --forest-night-rgb: 225 232 227;
+  --slate-rgb: 246 248 246;
+  --graphite-rgb: 200 211 203;
+  --ash-rgb: 138 147 141;
+  --cloud-rgb: 12 28 23;
+  --mist-rgb: 58 82 72;
+  --sage-rgb: 85 111 96;
+  --lantern-rgb: 138 100 34;
+  --lantern-soft-rgb: 181 138 60;
+  --lantern-deep-rgb: 107 77 24;
+  --lake-rgb: 47 91 77;
+  --leaf-rgb: 47 91 77;
+  --dusk-rose-rgb: 156 70 80;
+  --viridian-rgb: 47 91 77;
+  --pine-rgb: 58 82 72;
+  --moss-rgb: 68 78 55;
+  --cobalt-rgb: 14 86 177;
+  --deepsea-rgb: 23 65 92;
+  --skyblue-rgb: 85 135 168;
+
+  --grad-night-dawn: linear-gradient(180deg, #EEF2EF 0%, #E1E8E3 35%, #C8D3CB 65%, #8A6422 100%);
+  --grad-halo: conic-gradient(from 90deg, #8A6422, #B58A3C, #2F5B4D, #556F60, #8A6422);
+  --grad-water: radial-gradient(ellipse at 50% 0%, rgba(47, 91, 77, 0.2), transparent 70%);
+}
+
+html {
+  transition: background-color 1.2s cubic-bezier(0.22, 1, 0.36, 1), color 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body {
@@ -46,8 +135,12 @@ body {
   overflow-x: hidden;
 }
 
-/* Subtle background grain simulation */
-.bg-grain {
-  background-image: radial-gradient(rgba(226, 184, 102, 0.04) 1px, transparent 1px);
-  background-size: 24px 24px;
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

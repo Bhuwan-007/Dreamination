@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Camera,
@@ -22,6 +22,7 @@ import {
   DirectorSceneData,
   DirectorScriptData,
 } from "@/lib/api-client";
+import { PageBackdrop } from "@/components/ui/page-backdrop";
 
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   let token = apiClient.getToken();
@@ -39,7 +40,9 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 
 export default function DreamTheaterPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const dreamId = (params?.id as string) || "";
+  const isExpress = searchParams?.get("express") === "true";
 
   const [script, setScript] = useState<DirectorScriptData | null>(null);
   const [activeTab, setActiveTab] = useState<"stage" | "inspector" | "json">("stage");
@@ -61,15 +64,26 @@ export default function DreamTheaterPage() {
       setErrorMessage(null);
       try {
         let data: DirectorScriptData;
-        if (apiClient && typeof apiClient.getDirectorScript === "function") {
-          data = await apiClient.getDirectorScript(dreamId);
-        } else {
-          const res = await fetchWithAuth(`http://localhost:8000/dreams/${dreamId}/director`);
-          if (!res.ok) {
-            const errBody = await res.json().catch(() => ({}));
-            throw new Error(errBody.detail || `Failed to load director script: ${res.statusText}`);
+        if (isExpress) {
+          // Express bypass: ensure dream is reconstructed, then generate script
+          try {
+            await apiClient.reconstructDream(dreamId, "faithful");
+          } catch {
+            // Already reconstructed
           }
-          data = await res.json();
+          data = await apiClient.generateDirectorScript(dreamId, "nocturne_toon");
+        } else {
+          try {
+            data = await apiClient.getDirectorScript(dreamId);
+          } catch (fetchErr: any) {
+            // If not found yet, generate it
+            try {
+              await apiClient.reconstructDream(dreamId, "faithful");
+            } catch {
+              // ignore
+            }
+            data = await apiClient.generateDirectorScript(dreamId, "nocturne_toon");
+          }
         }
         if (!cancelled) {
           setScript(data);
@@ -91,7 +105,7 @@ export default function DreamTheaterPage() {
     return () => {
       cancelled = true;
     };
-  }, [dreamId]);
+  }, [dreamId, isExpress]);
 
   const handleReDirect = async () => {
     if (!dreamId) return;
@@ -133,42 +147,36 @@ export default function DreamTheaterPage() {
   const currentScene: DirectorSceneData | undefined = script?.scenes?.[selectedSceneIndex];
 
   return (
-    <div className="relative min-h-screen bg-void text-cloud font-sans selection:bg-lantern/20 selection:text-lantern pb-24">
-      {/* Background artwork ambience (strict -z-10 layer) */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" style={{ zIndex: -1 }}>
-        <div className="absolute inset-0 bg-void/80 z-10" />
-        <Image
-          src="/art/night-void.webp"
-          alt="Atmospheric Void"
-          fill
-          className="object-cover object-center"
-          style={{ opacity: 0.28 }}
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-void via-void/60 to-void/90 z-20" />
-      </div>
+    <div data-theme="night" className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-24">
+      {/* Background artwork ambience with heavy scrim */}
+      <PageBackdrop src="/art/night-void.webp" opacity={0.38} scrim="heavy" priority />
 
       {/* Header Bar */}
-      <header className="relative z-20 w-full border-b border-hairline/60 bg-void/85 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+      <header className="relative z-20 w-full border-b border-hairline/60 bg-surface/85 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
             href={`/dreams/${dreamId}/reflect`}
-            className="p-2 rounded-lg border border-hairline hover:border-lantern/60 text-mist hover:text-cloud transition-colors"
+            className="p-2 rounded-lg border border-hairline hover:border-accent/60 text-text-muted hover:text-text transition-colors"
             title="Back to Reflection"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <Clapperboard className="w-4 h-4 text-lantern" />
-              <h1 className="text-base font-serif font-medium text-cloud">
+              <Clapperboard className="w-4 h-4 text-accent" />
+              <h1 className="text-base font-serif font-medium text-text">
                 {script?.title || "3D Dream Theater"}
               </h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-lantern/10 border border-lantern/30 text-lantern">
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-accent/10 border border-accent/30 text-accent">
                 {script?.style_id || "nocturne_toon"}
               </span>
+              {isExpress && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-accent/20 border border-accent/50 text-accent">
+                  Express
+                </span>
+              )}
             </div>
-            <p className="text-xs text-mist font-serif">
+            <p className="text-xs text-text-muted font-serif">
               Directed 3D performance from validated action vocabulary
             </p>
           </div>
@@ -282,18 +290,13 @@ export default function DreamTheaterPage() {
                   <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-2 bg-void/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-hairline pointer-events-auto">
                       <Camera className="w-3.5 h-3.5 text-lantern" />
-                      <span className="text-[11px] font-mono text-cloud">
+                      <span className="text-xs font-mono text-cloud">
                         Shot: {currentScene?.beats?.[0]?.args?.preset || "wide"}
                       </span>
                       <span className="text-hairline">|</span>
-                      <span className="text-[11px] font-mono text-mist">
+                      <span className="text-xs font-mono text-mist">
                         Kit: {currentScene?.world?.kit || "void"}
                       </span>
-                    </div>
-
-                    <div className="bg-void/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-hairline pointer-events-auto flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[11px] font-mono text-mist">60 FPS</span>
                     </div>
                   </div>
                 </div>
@@ -408,11 +411,11 @@ export default function DreamTheaterPage() {
                         {/* Effects */}
                         {currentScene.world?.effects && currentScene.world.effects.length > 0 && (
                           <div className="pt-2 space-y-2">
-                            <span className="text-[11px] font-serif uppercase text-mist block">Dream Logic Effects</span>
+                            <span className="text-xs font-serif uppercase text-mist block">Dream Logic Effects</span>
                             <div className="space-y-1.5">
                               {currentScene.world.effects.map((ef, eIdx) => (
-                                <div key={eIdx} className="p-2 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-[11px] flex justify-between">
-                                  <span className="font-mono text-emerald-400 capitalize">{ef.type}</span>
+                                <div key={eIdx} className="p-2 rounded-lg bg-surface border border-hairline text-xs flex justify-between">
+                                  <span className="font-mono text-leaf capitalize">{ef.type}</span>
                                   <span className="text-mist">at {ef.at}s ({ef.duration}s)</span>
                                 </div>
                               ))}
@@ -424,7 +427,7 @@ export default function DreamTheaterPage() {
                       {/* Ambient Audio */}
                       <div className="p-5 rounded-2xl border border-hairline bg-surface/80 space-y-3">
                         <div className="text-xs font-serif uppercase tracking-wider text-mist flex items-center gap-1.5">
-                          <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+                          <Volume2 className="w-3.5 h-3.5 text-lake" />
                           <span>Soundscape</span>
                         </div>
                         <div className="text-xs space-y-1">
@@ -450,7 +453,7 @@ export default function DreamTheaterPage() {
                               <div key={mIdx} className="p-3 rounded-xl bg-void/60 border border-hairline space-y-1.5">
                                 <div className="flex items-center justify-between">
                                   <span className="font-serif font-medium text-cloud text-sm">{member.name}</span>
-                                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface border border-hairline text-mist uppercase">
+                                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-surface border border-hairline text-mist uppercase">
                                     {member.face_visibility || "full"}
                                   </span>
                                 </div>
@@ -480,7 +483,7 @@ export default function DreamTheaterPage() {
                             <div key={bIdx} className="p-3 rounded-xl bg-void/60 border border-hairline space-y-1">
                               <div className="flex items-center justify-between text-xs">
                                 <span className="font-mono text-lantern">t = {beat.t.toFixed(1)}s</span>
-                                <span className="font-mono text-mist uppercase text-[10px] px-1.5 py-0.5 rounded bg-surface">
+                                <span className="font-mono text-mist uppercase text-xs px-1.5 py-0.5 rounded bg-surface">
                                   {beat.actor}
                                 </span>
                               </div>
@@ -490,17 +493,17 @@ export default function DreamTheaterPage() {
                                   {beat.action}
                                 </span>
                                 {beat.action === "shot" && (
-                                  <span className="text-xs font-mono text-cyan-400">
+                                  <span className="text-xs font-mono text-lake">
                                     preset: {beat.args?.preset}
                                   </span>
                                 )}
                                 {beat.action === "walk_to" && (
-                                  <span className="text-xs font-mono text-emerald-400">
+                                  <span className="text-xs font-mono text-leaf">
                                     to: {beat.args?.anchor}
                                   </span>
                                 )}
                                 {beat.action === "animate" && (
-                                  <span className="text-xs font-mono text-purple-400">
+                                  <span className="text-xs font-mono text-lantern-soft">
                                     clip: {beat.args?.clip}
                                   </span>
                                 )}
@@ -510,7 +513,7 @@ export default function DreamTheaterPage() {
                                 <div className="mt-2 p-2 rounded bg-surface border border-hairline/60 text-xs font-serif italic text-cloud">
                                   &ldquo;{beat.args.line}&rdquo;
                                   {beat.args.emotion && (
-                                    <span className="ml-2 not-italic text-[10px] font-mono text-lantern">
+                                    <span className="ml-2 not-italic text-xs font-mono text-lantern">
                                       ({beat.args.emotion})
                                     </span>
                                   )}

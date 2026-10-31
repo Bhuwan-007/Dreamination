@@ -82,6 +82,8 @@ class DreamSummaryResponse(BaseModel):
     status: str
     has_audio: bool
     created_at: datetime
+    title: str | None = None
+    notes_snippet: str | None = None
 
 
 class FollowupAnswerItem(BaseModel):
@@ -179,17 +181,35 @@ async def list_dreams(
     repo = DreamRepository(db, current_user.id)
     records = await repo.list(offset=offset, limit=limit)
 
-    return [
-        DreamSummaryResponse(
-            id=d.id,
-            captured_at=d.captured_at,
-            mood_on_waking=d.mood_on_waking,
-            status=d.status,
-            has_audio=bool(d.raw_audio_key),
-            created_at=d.created_at,
+    results: list[DreamSummaryResponse] = []
+    for d in records:
+        title = None
+        notes_snippet = None
+        latest_version = await repo.get_approved_version(d.id) or await repo.get_latest_version(d.id)
+        if latest_version and latest_version.story_json:
+            title = latest_version.story_json.get("title")
+        if not title:
+            decrypted = await repo.get_decrypted(d.id)
+            if decrypted:
+                text = (decrypted.raw_text or decrypted.transcript or "").strip()
+                if text:
+                    words = text.split()
+                    notes_snippet = " ".join(words[:10]) + ("..." if len(words) > 10 else "")
+
+        results.append(
+            DreamSummaryResponse(
+                id=d.id,
+                captured_at=d.captured_at,
+                mood_on_waking=d.mood_on_waking,
+                status=d.status,
+                has_audio=bool(d.raw_audio_key),
+                created_at=d.created_at,
+                title=title,
+                notes_snippet=notes_snippet,
+            )
         )
-        for d in records
-    ]
+
+    return results
 
 
 @router.get("/{dream_id}", response_model=DreamResponse)

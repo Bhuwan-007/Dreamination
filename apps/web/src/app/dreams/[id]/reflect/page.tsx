@@ -8,6 +8,12 @@ import {
   InterpretationResponse,
   InterpretationThread,
 } from "@/lib/api-client";
+import { ArchCard } from "@/components/ui/arch-card";
+import { Chip } from "@/components/ui/chip";
+import { PrimaryButton } from "@/components/ui/primary-button";
+import { SecondaryButton } from "@/components/ui/secondary-button";
+import { HaloLoader } from "@/components/ui/halo-loader";
+import { PageBackdrop } from "@/components/ui/page-backdrop";
 import {
   ArrowLeft,
   ArrowRight,
@@ -108,40 +114,40 @@ export default function ReflectPage() {
       case "cognitive_emotional":
         return {
           label: "Emotional Landscape",
-          icon: <Compass className="w-3.5 h-3.5 text-lantern" />,
-          color: "border-lantern/40 text-lantern bg-lantern/10",
+          icon: <Compass className="w-3.5 h-3.5 text-accent" />,
+          color: "border-accent/40 text-accent bg-accent/10",
         };
       case "jungian":
         return {
           label: "Archetypal & Symbolic",
-          icon: <Eye className="w-3.5 h-3.5 text-amber-400" />,
-          color: "border-amber-500/40 text-amber-300 bg-amber-500/10",
+          icon: <Eye className="w-3.5 h-3.5 text-link" />,
+          color: "border-link/40 text-link bg-link/10",
         };
       case "day_residue":
         return {
           label: "Day Residue & Memory",
-          icon: <History className="w-3.5 h-3.5 text-cyan-400" />,
-          color: "border-cyan-500/40 text-cyan-300 bg-cyan-500/10",
+          icon: <History className="w-3.5 h-3.5 text-success" />,
+          color: "border-success/40 text-success bg-success/10",
         };
       case "relational":
         return {
           label: "Relational & Encounters",
-          icon: <HeartHandshake className="w-3.5 h-3.5 text-emerald-400" />,
-          color: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
+          icon: <HeartHandshake className="w-3.5 h-3.5 text-text-subtle" />,
+          color: "border-text-subtle/40 text-text-subtle bg-text-subtle/10",
         };
       case "indic_philosophical":
       case "vedantic":
       case "dharmic":
         return {
           label: "Vedantic & Consciousness",
-          icon: <Sun className="w-3.5 h-3.5 text-orange-400" />,
-          color: "border-orange-500/40 text-orange-300 bg-orange-500/10",
+          icon: <Sun className="w-3.5 h-3.5 text-accent" />,
+          color: "border-accent/40 text-accent bg-accent/10",
         };
       default:
         return {
           label: "Reflective Thread",
-          icon: <Feather className="w-3.5 h-3.5 text-mist" />,
-          color: "border-mist/30 text-mist bg-slate/40",
+          icon: <Feather className="w-3.5 h-3.5 text-text-muted" />,
+          color: "border-hairline text-text-muted bg-surface-raised",
         };
     }
   };
@@ -157,9 +163,9 @@ export default function ReflectPage() {
     : [];
 
   return (
-    <div className="relative min-h-screen bg-void text-cloud font-sans selection:bg-lantern/20 selection:text-lantern pb-32">
-      {/* Background glow and subtle water ripple effect */}
-      <div className="fixed inset-0 pointer-events-none opacity-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/30 via-void to-void" />
+    <div className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-32">
+      {/* Background artwork ambience */}
+      <PageBackdrop src="/art/reflect.webp" opacity={0.42} />
 
       {/* Top Header */}
       <header className="sticky top-0 z-40 backdrop-blur-md bg-void/80 border-b border-hairline px-6 py-4">
@@ -173,8 +179,8 @@ export default function ReflectPage() {
           </Link>
 
           <div className="text-center">
-            <span className="text-xs uppercase tracking-widest text-lantern font-serif">
-              Phase VI · Reflection
+            <span className="text-xs uppercase tracking-widest text-accent font-serif">
+              Step 3 · Reflect
             </span>
             <h1 className="text-sm font-serif font-medium text-cloud">
               Possible Threads
@@ -209,28 +215,18 @@ export default function ReflectPage() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="py-24 text-center space-y-6">
-            <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-2 border-lantern/30 animate-ping" />
-              <div className="w-12 h-12 rounded-full border border-lantern/80 flex items-center justify-center bg-void/80 text-lantern animate-spin">
-                <Sparkles className="w-6 h-6" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-serif font-medium text-cloud">
-                Listening to the dream motifs...
-              </h3>
-              <p className="text-xs text-mist font-serif">
-                Connecting emotional continuity with verbatim evidence.
-              </p>
-            </div>
+          <div className="py-24 text-center">
+            <HaloLoader
+              stageText="Listening to the dream motifs..."
+              subText="Connecting emotional continuity with verbatim evidence."
+            />
           </div>
         )}
 
         {/* Error State */}
         {!isLoading && error && (
           <div className="py-16 text-center space-y-5 max-w-md mx-auto">
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-serif leading-relaxed">
+            <div className="p-4 rounded-2xl bg-accent/10 border border-accent/30 text-accent-soft text-xs font-serif leading-relaxed">
               {error}
             </div>
             <button
@@ -310,12 +306,14 @@ export default function ReflectPage() {
               const isSelected = selectedThreadIndex === originalIdx;
 
               return (
-                <article
+                <ArchCard
                   key={originalIdx}
-                  className={`relative p-6 sm:p-8 rounded-2xl border transition-all duration-300 ${
+                  isDoubleFrame
+                  glow={isSelected}
+                  className={`p-6 sm:p-8 transition-all duration-300 ${
                     isSelected
-                      ? "border-lantern/80 bg-slate/50 shadow-lantern ring-1 ring-lantern/30"
-                      : "border-hairline bg-slate/20 hover:border-mist/40 hover:bg-slate/30"
+                      ? "ring-1 ring-accent/40 shadow-lantern"
+                      : ""
                   }`}
                 >
                   {/* Lens Badge */}
@@ -387,7 +385,7 @@ export default function ReflectPage() {
                     {thread.waking_life_questions && thread.waking_life_questions.length > 0 && (
                       <div className="p-3.5 rounded-xl bg-void/40 border border-hairline/40 space-y-1.5">
                         <div className="text-[11px] uppercase tracking-wider text-mist font-serif flex items-center gap-1">
-                          <HelpCircle className="w-3 h-3 text-cyan-400" />
+                          <HelpCircle className="w-3 h-3 text-link" />
                           <span>For Reflection</span>
                         </div>
                         <ul className="space-y-1.5">
@@ -465,7 +463,7 @@ export default function ReflectPage() {
                       </div>
                     </div>
                   )}
-                </article>
+                </ArchCard>
               );
             })}
 

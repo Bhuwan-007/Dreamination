@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "check-palette": "node scripts/check-palette.js",
+    "test-tokens": "node scripts/test-opacity-tokens.js",
+    "lint": "node scripts/check-palette.js && node scripts/test-opacity-tokens.js && next lint"
   },
   "dependencies": {
     "lucide-react": "^0.379.0",
-    "motion": "^11.2.0",
+    "motion": "^11.18.2",
     "next": "^14.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

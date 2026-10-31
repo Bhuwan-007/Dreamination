@@ -18,6 +18,7 @@ import {
   Layers,
   ChevronRight,
   MessageSquare,
+  Moon,
 } from "lucide-react";
 import {
   apiClient,
@@ -27,6 +28,8 @@ import {
   ReconstructedScene,
   ReconstructionOutput,
 } from "@/lib/api-client";
+import { useToast } from "@/components/ui/toast";
+import { PageBackdrop } from "@/components/ui/page-backdrop";
 
 interface PageProps {
   params: { id: string };
@@ -37,6 +40,7 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isExpressMode = searchParams.get("express") === "true";
+  const { toast, errorToast } = useToast();
 
   // Core reconstruction state
   const [activeMode, setActiveMode] = useState<"faithful" | "authored">("faithful");
@@ -153,7 +157,7 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
       setRepairCorrection("");
     } catch (err: any) {
       console.error("Single scene repair failed:", err);
-      alert("Failed to repair scene: " + (err.message || "Unknown error"));
+      errorToast(err.message || "Failed to repair scene.");
     } finally {
       setIsRepairing(false);
     }
@@ -174,26 +178,16 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
       router.push(`/dreams/${dreamId}/reflect`);
     } catch (err: any) {
       console.error("Failed to approve dream:", err);
-      alert("Failed to approve dream: " + (err.message || "Unknown error"));
+      errorToast(err.message || "Failed to approve dream.");
     } finally {
       setIsApproving(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen bg-void text-cloud font-sans selection:bg-lantern/20 selection:text-lantern pb-32">
-      {/* 1. Luminous Night Void Background Art */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <Image
-          src="/art/night-void.webp"
-          alt="Night Void"
-          fill
-          className="object-cover object-center opacity-45 brightness-95"
-          priority
-        />
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-void/50 to-void/90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-void via-void/70 to-transparent" />
-      </div>
+    <div className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-32">
+      {/* 1. Luminous Weave Background Art */}
+      <PageBackdrop src="/art/weave.webp" opacity={0.42} priority />
 
       {/* 2. Top Navigation Bar */}
       <header className="relative z-10 w-full border-b border-hairline/60 bg-void/75 backdrop-blur-md px-6 py-4 flex items-center justify-between">
@@ -206,8 +200,8 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
             <span className="font-medium">The Dream Machine</span>
           </Link>
           <span className="text-graphite text-xs">/</span>
-          <span className="text-xs text-lantern font-serif italic">
-            Phase 5: Reconstruction
+          <span className="text-xs text-accent font-serif">
+            Step 2 · Weave
           </span>
         </div>
 
@@ -222,7 +216,7 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
                   : "text-mist hover:text-cloud"
               }`}
             >
-              <span>🌙</span>
+              <Moon className="w-3.5 h-3.5" />
               <span>Faithful</span>
               <span className="text-[10px] opacity-75 hidden sm:inline">(Raw Memory)</span>
             </button>
@@ -234,7 +228,7 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
                   : "text-mist hover:text-cloud"
               }`}
             >
-              <span>✨</span>
+              <Sparkles className="w-3.5 h-3.5" />
               <span>Authored Arc</span>
               <span className="text-[10px] opacity-75 hidden sm:inline">(Cinematic Arc)</span>
             </button>
@@ -275,12 +269,12 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
 
         {/* Error State */}
         {errorMessage && !isLoading && (
-          <div className="p-6 rounded-2xl bg-danger/10 border border-danger/30 text-center space-y-4 my-8">
-            <AlertCircle className="w-8 h-8 text-danger mx-auto" />
+          <div className="p-6 rounded-2xl bg-dusk-rose/10 border border-dusk-rose/30 text-center space-y-4 my-8">
+            <AlertCircle className="w-8 h-8 text-dusk-rose mx-auto" />
             <p className="text-sm text-cloud font-serif">{errorMessage}</p>
             <button
               onClick={() => handleModeSwitch(activeMode)}
-              className="px-4 py-2 rounded-xl bg-slate border border-hairline text-xs text-cloud hover:bg-slate-raised"
+              className="px-4 py-2 rounded-xl bg-slate border border-hairline text-xs text-cloud hover:bg-surface-raised"
             >
               Retry Reconstruction
             </button>
@@ -363,43 +357,61 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
                           activeTooltip?.sceneId === scene.scene_id &&
                           activeTooltip?.beatIndex === bIdx;
 
+                        if (!isInferred) {
+                          return (
+                            <span key={bIdx} className="text-cloud/95">
+                              {beat.text}{" "}
+                            </span>
+                          );
+                        }
+
                         return (
-                          <span
-                            key={bIdx}
-                            onClick={() => {
-                              if (isInferred) {
+                          <span key={bIdx} className="relative inline">
+                            <button
+                              type="button"
+                              aria-expanded={isTooltipActive}
+                              onClick={() => {
                                 setActiveTooltip(
                                   isTooltipActive
                                     ? null
                                     : { sceneId: scene.scene_id, beatIndex: bIdx, beat }
                                 );
-                              }
-                            }}
-                            className={`relative inline cursor-pointer transition-all duration-200 ${
-                              isInferred
-                                ? "text-cloud/90 underline decoration-lantern/60 decoration-wavy underline-offset-4 hover:decoration-lantern hover:text-cloud hover:bg-lantern/10 rounded px-1"
-                                : ""
-                            }`}
-                          >
-                            {beat.text}{" "}
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setActiveTooltip(
+                                    isTooltipActive
+                                      ? null
+                                      : { sceneId: scene.scene_id, beatIndex: bIdx, beat }
+                                  );
+                                }
+                              }}
+                              className="text-left font-serif text-lg leading-[1.8] text-cloud/90 underline decoration-accent/60 decoration-wavy underline-offset-4 hover:decoration-accent hover:text-cloud hover:bg-accent/10 rounded px-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-bg"
+                              title="Inferred narrative bridge. Tap or press Enter to inspect evidence."
+                            >
+                              {beat.text}
+                            </button>{" "}
                             {/* Inferred Lantern Tooltip / Popover */}
                             {isTooltipActive && beat.inference_reason && (
                               <div
-                                className="absolute left-0 bottom-full mb-2 w-72 p-4 rounded-xl bg-void/95 border border-lantern text-xs shadow-2xl z-50 text-left animate-fade-in font-sans"
+                                role="region"
+                                aria-label="Inferred Bridge Details"
+                                className="absolute left-0 bottom-full mb-2 w-72 p-4 rounded-xl bg-surface-raised border border-accent text-xs shadow-2xl z-50 text-left animate-fade-in font-sans"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <div className="flex items-center gap-1.5 text-lantern font-medium pb-1.5 border-b border-hairline/40">
+                                <div className="flex items-center gap-1.5 text-accent font-medium pb-1.5 border-b border-hairline/40">
                                   <Sparkles className="w-3.5 h-3.5" />
                                   <span>Inferred Bridge</span>
-                                  <span className="ml-auto text-[10px] text-mist font-mono">
+                                  <span className="ml-auto text-[11px] text-text-muted font-mono">
                                     {Math.round(beat.confidence * 100)}% match
                                   </span>
                                 </div>
-                                <p className="text-mist pt-2 text-[12px] leading-relaxed italic font-serif">
+                                <p className="text-text-muted pt-2 text-xs leading-relaxed italic font-serif">
                                   &ldquo;{beat.inference_reason}&rdquo;
                                 </p>
-                                <div className="pt-2 text-[10px] text-graphite flex justify-between items-center">
-                                  <span>Tap again to dismiss</span>
+                                <div className="pt-2 text-xs text-text-subtle flex justify-between items-center">
+                                  <span>Tap or press Enter to dismiss</span>
                                 </div>
                               </div>
                             )}

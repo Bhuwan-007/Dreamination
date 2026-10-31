@@ -14,19 +14,31 @@ import {
   ArrowRight,
   RotateCcw,
   Volume2,
+  Moon,
+  Leaf,
+  Compass,
+  Waves,
+  Zap,
 } from "lucide-react";
 import { apiClient, FollowupQuestion } from "@/lib/api-client";
+import { useToast } from "@/components/ui/toast";
+import { TravelerLogo } from "@/components/ui/traveler-logo";
+import { PrimaryButton } from "@/components/ui/primary-button";
+import { SecondaryButton } from "@/components/ui/secondary-button";
+import { ArchCard } from "@/components/ui/arch-card";
 
 // Mood choices from Design.md
 const WAKING_MOODS = [
-  { id: "wonder", label: "Wonder", emoji: "🌙", description: "Vast, luminous, floating" },
-  { id: "serene", label: "Serene", emoji: "🌿", description: "Quiet, peaceful, grounded" },
-  { id: "curious", label: "Curious", emoji: "🌀", description: "Puzzled, intrigued, seeking" },
-  { id: "melancholic", label: "Melancholic", emoji: "🌊", description: "Heavy, submerged, gentle ache" },
-  { id: "uneasy", label: "Uneasy", emoji: "⚡", description: "Tense, hurried, lingering tremor" },
+  { id: "wonder", label: "Wonder", icon: <Moon className="w-4 h-4 text-accent" />, description: "Vast, luminous, floating" },
+  { id: "serene", label: "Serene", icon: <Leaf className="w-4 h-4 text-leaf" />, description: "Quiet, peaceful, grounded" },
+  { id: "curious", label: "Curious", icon: <Compass className="w-4 h-4 text-link" />, description: "Puzzled, intrigued, seeking" },
+  { id: "melancholic", label: "Melancholic", icon: <Waves className="w-4 h-4 text-sage" />, description: "Heavy, submerged, gentle ache" },
+  { id: "uneasy", label: "Uneasy", icon: <Zap className="w-4 h-4 text-dusk-rose" />, description: "Tense, hurried, lingering tremor" },
 ];
 
 export default function DreamCapturePage() {
+  const { toast, errorToast } = useToast();
+
   // Capture states
   const [rawText, setRawText] = useState("");
   const [moodOnWaking, setMoodOnWaking] = useState<string | null>(null);
@@ -62,18 +74,16 @@ export default function DreamCapturePage() {
   const animationFrameRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const recognitionRef = useRef<any>(null);
   const preRecordingTextRef = useRef<string>("");
 
-  // 1. Auto-save draft restoration and saving
+  // 1. Auto-save draft restoration (sessionStorage only, life context not stored)
   useEffect(() => {
-    const saved = localStorage.getItem("dream_capture_draft");
+    const saved = sessionStorage.getItem("dream_capture_draft");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.rawText) setRawText(parsed.rawText);
         if (parsed.moodOnWaking) setMoodOnWaking(parsed.moodOnWaking);
-        if (parsed.recentLifeContext) setRecentLifeContext(parsed.recentLifeContext);
       } catch (err) {
         console.error("Failed to restore draft:", err);
       }
@@ -82,10 +92,10 @@ export default function DreamCapturePage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (rawText || moodOnWaking || recentLifeContext) {
-        localStorage.setItem(
+      if (rawText || moodOnWaking) {
+        sessionStorage.setItem(
           "dream_capture_draft",
-          JSON.stringify({ rawText, moodOnWaking, recentLifeContext })
+          JSON.stringify({ rawText, moodOnWaking })
         );
         setAutoSaveNotification(true);
         setTimeout(() => setAutoSaveNotification(false), 2000);
@@ -93,7 +103,7 @@ export default function DreamCapturePage() {
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [rawText, moodOnWaking, recentLifeContext]);
+  }, [rawText, moodOnWaking]);
 
   // 2. Audio recording controls
   const startRecording = async () => {
@@ -131,38 +141,6 @@ export default function DreamCapturePage() {
       setIsRecording(true);
       setRecordingDuration(0);
 
-      // Start live SpeechRecognition for simultaneous real-time text streaming into the dream pool
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-      if (SpeechRecognition) {
-        try {
-          const recognition = new SpeechRecognition();
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.lang = "en-US";
-
-          recognition.onresult = (event: any) => {
-            let sessionTranscript = "";
-            for (let i = 0; i < event.results.length; i++) {
-              sessionTranscript += event.results[i][0].transcript + " ";
-            }
-            const cleanSpoken = sessionTranscript.trim();
-            const prefix = preRecordingTextRef.current.trim();
-            setRawText(prefix ? `${prefix} ${cleanSpoken}` : cleanSpoken);
-          };
-
-          recognition.onerror = (e: any) => {
-            console.warn("Speech recognition notice:", e.error);
-          };
-
-          recognition.start();
-          recognitionRef.current = recognition;
-        } catch (err) {
-          console.warn("Live SpeechRecognition not initialized:", err);
-        }
-      }
-
       timerIntervalRef.current = setInterval(() => {
         setRecordingDuration((prev) => prev + 1);
       }, 1000);
@@ -170,7 +148,7 @@ export default function DreamCapturePage() {
       visualizeAudio();
     } catch (err) {
       console.error("Microphone access error:", err);
-      alert("Microphone permission was denied or is unavailable. You can also write your dream directly below.");
+      errorToast("Microphone permission was denied or is unavailable. You can also write your dream directly below.");
     }
   };
 
@@ -181,12 +159,6 @@ export default function DreamCapturePage() {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       if (audioContextRef.current) audioContextRef.current.close();
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-        recognitionRef.current = null;
-      }
     }
   };
 
@@ -256,7 +228,7 @@ export default function DreamCapturePage() {
   // 3. Dream submission & follow-up trigger
   const handleCaptureDream = async () => {
     if (!rawText.trim() && !transcript) {
-      alert("Please speak or write a few fragments of your dream first.");
+      toast("What do you remember? Even a colour will do.");
       return;
     }
 
@@ -272,7 +244,7 @@ export default function DreamCapturePage() {
       });
 
       setCapturedDreamId(dream.id);
-      localStorage.removeItem("dream_capture_draft");
+      sessionStorage.removeItem("dream_capture_draft");
 
       // Fetch follow-up questions
       setIsGatheringFollowups(true);
@@ -281,7 +253,7 @@ export default function DreamCapturePage() {
       setCurrentQuestionIndex(0);
     } catch (err) {
       console.error("Dream capture error:", err);
-      alert("Failed to save dream. Please check your connection.");
+      errorToast("The tide took that one. Try again?");
     } finally {
       setIsSubmitting(false);
       setIsGatheringFollowups(false);
@@ -330,7 +302,7 @@ export default function DreamCapturePage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-void text-cloud font-sans selection:bg-lantern/30">
+    <div data-theme="night" className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/30 selection:text-accent-soft pb-24">
       {/* Background artwork per Design.md A2 (Night void) with luminous atmospheric depth */}
       <div className="fixed inset-0 pointer-events-none opacity-55 z-0 transition-opacity duration-1000">
         <Image
@@ -341,27 +313,27 @@ export default function DreamCapturePage() {
           priority
         />
         {/* Soft edge darkening and cinematic vignette allowing the star ring and water to shine through */}
-        <div className="absolute inset-0 bg-gradient-to-t from-void via-void/25 to-void/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/25 to-bg/70" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(9,13,17,0.75)_100%)]" />
       </div>
 
       {/* Top Header */}
-      <header className="relative z-10 flex items-center justify-between px-6 py-6 border-b border-graphite/40 backdrop-blur-md">
-        <Link href="/" className="group flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-lantern group-hover:scale-125 transition-transform" />
-          <span className="font-serif tracking-widest text-sm uppercase text-mist group-hover:text-lantern transition-colors">
+      <header className="relative z-10 flex items-center justify-between px-6 py-5 border-b border-hairline backdrop-blur-md bg-bg/40">
+        <Link href="/" className="group flex items-center gap-3">
+          <TravelerLogo size={28} />
+          <span className="font-serif tracking-widest text-sm uppercase text-text-muted group-hover:text-accent transition-colors">
             The Dream Machine
           </span>
         </Link>
 
-        <div className="flex items-center gap-4 text-xs text-sage">
+        <div className="flex items-center gap-4 text-xs text-text-subtle">
           {autoSaveNotification && (
-            <span className="flex items-center gap-1.5 text-lantern animate-pulse">
+            <span className="flex items-center gap-1.5 text-accent animate-pulse motion-reduce:animate-none">
               <Save className="w-3.5 h-3.5" /> Draft saved
             </span>
           )}
-          <span className="px-2.5 py-1 rounded-full border border-graphite bg-forest-night/60">
-            Phase 3: Capture
+          <span className="px-2.5 py-1 rounded-full border border-hairline bg-surface/80 text-text-muted">
+            Capture · Step 1
           </span>
         </div>
       </header>
@@ -370,14 +342,16 @@ export default function DreamCapturePage() {
       <main className="relative z-10 max-w-3xl mx-auto px-6 py-12">
         {!capturedDreamId ? (
           <div className="space-y-10 animate-fade-in">
-            {/* Headline */}
+            {/* Headline with soft scrim */}
             <div className="text-center space-y-2">
-              <h1 className="font-serif text-3xl md:text-4xl text-cloud tracking-tight font-light">
+              <h1 className="font-serif text-3xl md:text-4xl text-text tracking-tight font-light">
                 What do you remember?
               </h1>
-              <p className="text-sage text-sm italic font-serif">
-                Even a colour, a phrase, or a feeling will do.
-              </p>
+              <div>
+                <p className="text-text-subtle text-xs sm:text-sm italic font-serif px-3 py-1 rounded-full bg-bg/60 border border-hairline/40 backdrop-blur-sm inline-block">
+                  Even a colour, a phrase, or a feeling will do.
+                </p>
+              </div>
             </div>
 
             {/* The Halo Microphone Recorder */}
@@ -416,21 +390,27 @@ export default function DreamCapturePage() {
                 </button>
               </div>
 
-              {/* Status and timer */}
+              {/* Status and timer with scrim */}
               <div className="mt-4 text-center">
                 {isRecording ? (
                   <div className="space-y-1">
                     <span className="inline-block px-3 py-1 rounded-full text-xs font-mono bg-dusk-rose/20 text-dusk-rose border border-dusk-rose/40">
                       Recording {formatSeconds(recordingDuration)}
                     </span>
-                    <p className="text-xs text-sage">Speak freely. Pauses and fragments are welcomed.</p>
+                    <div>
+                      <p className="text-xs text-text-subtle px-3 py-1 rounded-full bg-bg/70 border border-hairline/40 backdrop-blur-sm inline-block">
+                        Speak freely. Pauses and fragments are welcomed.
+                      </p>
+                    </div>
                   </div>
                 ) : isTranscribing ? (
-                  <p className="text-xs text-lantern animate-pulse flex items-center gap-1.5 justify-center">
+                  <p className="text-xs text-accent animate-pulse motion-reduce:animate-none flex items-center gap-1.5 justify-center px-3 py-1 rounded-full bg-bg/70 border border-hairline/40 backdrop-blur-sm inline-flex">
                     <Sparkles className="w-3.5 h-3.5" /> Gathering your words into text...
                   </p>
                 ) : (
-                  <p className="text-xs text-sage">Tap the halo to speak, or write below</p>
+                  <p className="text-xs text-text-subtle px-3 py-1 rounded-full bg-bg/70 border border-hairline/40 backdrop-blur-sm inline-block">
+                    Tap the halo to speak, or write below
+                  </p>
                 )}
               </div>
 
@@ -439,7 +419,7 @@ export default function DreamCapturePage() {
                 ref={canvasRef}
                 width={360}
                 height={40}
-                className={`mt-3 rounded border border-graphite/40 transition-opacity ${
+                className={`mt-3 rounded border border-hairline/40 transition-opacity ${
                   isRecording ? "opacity-100" : "opacity-0 h-0"
                 }`}
               />
@@ -448,12 +428,12 @@ export default function DreamCapturePage() {
             {/* The Dream Pool: Dark Water Text Area */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="block text-xs uppercase tracking-widest text-mist font-medium">
+                <label className="block text-xs uppercase tracking-widest text-text-muted font-medium">
                   The Dream Pool (Notes & Fragments)
                 </label>
                 {isRecording && (
-                  <span className="flex items-center gap-1.5 text-xs text-lantern animate-pulse">
-                    <span className="w-2 h-2 rounded-full bg-lantern" />
+                  <span className="flex items-center gap-1.5 text-xs text-accent animate-pulse motion-reduce:animate-none">
+                    <span className="w-2 h-2 rounded-full bg-accent" />
                     <span>Listening & streaming words live...</span>
                   </span>
                 )}
@@ -462,11 +442,11 @@ export default function DreamCapturePage() {
                 <textarea
                   value={rawText}
                   onChange={(e) => setRawText(e.target.value)}
-                  placeholder="I was walking along a coast where the sea was completely purple, and someone handed me an iron key..."
+                  placeholder="I was walking along a coast where the sea was completely violet-dark, and someone handed me an iron key..."
                   rows={6}
-                  className="w-full px-5 py-4 text-base md:text-lg font-serif bg-forest-night/85 backdrop-blur-md border border-graphite/80 rounded-2xl text-cloud placeholder-ash/80 focus:outline-none focus:border-lantern/60 focus:ring-1 focus:ring-lantern/40 transition-all resize-y shadow-inner"
+                  className="w-full px-5 py-4 text-base md:text-lg font-serif bg-surface/85 backdrop-blur-md border border-hairline rounded-2xl text-text placeholder-text-subtle focus:outline-none focus:ring-2 focus:ring-focus transition-all resize-y shadow-inner"
                 />
-                <div className="absolute bottom-3 right-4 text-xs text-sage font-mono">
+                <div className="absolute bottom-3 right-4 text-xs text-text-subtle font-mono">
                   {rawText.length > 0 ? `${rawText.split(/\s+/).filter(Boolean).length} words` : "Empty"}
                 </div>
               </div>
@@ -487,13 +467,13 @@ export default function DreamCapturePage() {
                       onClick={() => setMoodOnWaking(isSelected ? null : m.id)}
                       className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center ${
                         isSelected
-                          ? "bg-slate border-lantern text-lantern shadow-lantern"
-                          : "bg-forest-night/40 border-graphite/60 text-mist hover:border-lantern/40 hover:bg-forest-night"
+                          ? "bg-surface-raised border-accent text-accent shadow-lantern"
+                          : "bg-surface/50 border-hairline/60 text-text-muted hover:border-accent/40 hover:bg-surface"
                       }`}
                     >
-                      <span className="text-xl mb-1">{m.emoji}</span>
+                      <span className="mb-1.5 flex items-center justify-center">{m.icon}</span>
                       <span className="text-xs font-medium">{m.label}</span>
-                      <span className="text-[10px] text-sage hidden sm:block mt-0.5 line-clamp-1">
+                      <span className="text-[10px] text-text-subtle hidden sm:block mt-0.5 line-clamp-1">
                         {m.description}
                       </span>
                     </button>
@@ -503,7 +483,7 @@ export default function DreamCapturePage() {
             </div>
 
             {/* Collapsible Recent Life Context Field */}
-            <div className="border border-graphite/50 rounded-xl overflow-hidden bg-forest-night/30">
+            <div className="border border-hairline/50 rounded-xl overflow-hidden bg-forest-night/30">
               <button
                 type="button"
                 onClick={() => setShowContextDrawer(!showContextDrawer)}
@@ -516,7 +496,7 @@ export default function DreamCapturePage() {
               </button>
 
               {showContextDrawer && (
-                <div className="p-4 pt-0 border-t border-graphite/30 space-y-2">
+                <div className="p-4 pt-0 border-t border-hairline/30 space-y-2">
                   <p className="text-xs text-sage">
                     Helps ground archetypes and daytime residue without flattening the dream. Encrypted securely.
                   </p>
@@ -525,7 +505,7 @@ export default function DreamCapturePage() {
                     onChange={(e) => setRecentLifeContext(e.target.value)}
                     placeholder="e.g. Started a new job, had an argument with a friend yesterday, feeling restless..."
                     rows={3}
-                    className="w-full px-3 py-2 text-sm bg-slate/60 border border-graphite rounded-lg text-cloud placeholder-ash/70 focus:outline-none focus:border-lantern/40"
+                    className="w-full px-3 py-2 text-sm bg-surface-raised border border-hairline rounded-lg text-text placeholder-text-subtle focus:outline-none focus:ring-2 focus:ring-focus"
                   />
                 </div>
               )}
@@ -584,7 +564,7 @@ export default function DreamCapturePage() {
                   placeholder="A few words or sensations..."
                   rows={3}
                   autoFocus
-                  className="w-full px-4 py-3 bg-forest-night border border-graphite rounded-xl text-cloud placeholder-ash/60 focus:outline-none focus:border-lantern/60 text-base font-serif"
+                  className="w-full px-4 py-3 bg-surface border border-hairline rounded-xl text-text placeholder-text-subtle focus:outline-none focus:ring-2 focus:ring-focus text-base font-serif"
                 />
 
                 <div className="flex items-center justify-between pt-2">
@@ -600,7 +580,7 @@ export default function DreamCapturePage() {
                     <button
                       type="button"
                       onClick={() => finishFollowups()}
-                      className="px-4 py-2.5 rounded-lg border border-graphite text-xs text-mist hover:text-cloud hover:border-lantern/40 transition-all"
+                      className="px-4 py-2.5 rounded-lg border border-hairline text-xs text-mist hover:text-cloud hover:border-lantern/40 transition-all"
                     >
                       That&apos;s enough, weave it
                     </button>
@@ -615,7 +595,7 @@ export default function DreamCapturePage() {
                 </div>
               </div>
             ) : (
-              <div className="p-8 text-center space-y-4 rounded-2xl border border-graphite bg-forest-night/60">
+              <div className="p-8 text-center space-y-4 rounded-2xl border border-hairline bg-forest-night/60">
                 <Sparkles className="w-8 h-8 text-lantern mx-auto animate-pulse" />
                 <p className="font-serif text-lg text-cloud">
                   Your notes are already rich with detail.
@@ -654,27 +634,31 @@ export default function DreamCapturePage() {
                   setRecordedAnswers([]);
                   setIsComplete(false);
                 }}
-                className="px-4 py-2.5 rounded-xl border border-graphite text-xs text-mist hover:text-cloud flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl border border-hairline text-xs text-text-muted hover:text-text flex items-center gap-2"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Capture Another</span>
               </button>
 
-              <Link
-                href={`/dreams/${capturedDreamId || "latest"}/review`}
-                className="px-6 py-2.5 rounded-xl bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft flex items-center gap-2 shadow-lantern"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Weave & Review Story</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              {capturedDreamId && (
+                <>
+                  <Link
+                    href={`/dreams/${capturedDreamId}/review`}
+                    className="px-6 py-2.5 rounded-xl bg-accent text-bg font-semibold text-xs hover:bg-accent-soft flex items-center gap-2 shadow-lantern"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Weave & Review Story</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
 
-              <Link
-                href={`/dreams/${capturedDreamId || "latest"}/review?express=true`}
-                className="px-4 py-2.5 rounded-xl border border-hairline bg-slate text-xs text-mist hover:text-cloud flex items-center gap-2"
-              >
-                <span>Watch in 3D (Express)</span>
-              </Link>
+                  <Link
+                    href={`/dreams/${capturedDreamId}/review?express=true`}
+                    className="px-4 py-2.5 rounded-xl border border-hairline bg-surface-raised text-xs text-text-muted hover:text-text flex items-center gap-2"
+                  >
+                    <span>Watch in 3D (Express)</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
