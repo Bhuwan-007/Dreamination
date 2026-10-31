@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel
@@ -20,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth import get_current_user
 from ..database import get_db
 from ..followups import FollowupResponse, generate_followup_questions
+from ..logging import logger
 from ..models.dream import DreamStatus
 from ..models.interpretation import Interpretation
 from ..models.user import User
@@ -478,6 +480,15 @@ async def approve_dream(
 
     try:
         approved_version = await repo.approve_version(dream_id, version_id)
+
+        # Sync approved dream to personal dream graph (Phase 7)
+        try:
+            from ..stages.graph import graph_service
+            await graph_service.sync_dream_to_graph(db, dream_id=dream_id, user_id=current_user.id)
+            await db.commit()
+        except Exception as graph_err:
+            logger.warning(f"Failed to sync approved dream {dream_id} to graph: {graph_err}")
+
         return ApproveDreamResponse(
             status=DreamStatus.APPROVED.value,
             dream_id=dream_id,
@@ -598,6 +609,21 @@ async def submit_interpretation_feedback(
     await db.commit()
     await db.refresh(interp)
 
+    # Update personal symbol lexicon via Dirichlet Bayesian model (Phase 7)
+    try:
+        from ..stages.lexicon import lexicon_service
+        await lexicon_service.update_from_feedback(
+            db=db,
+            user_id=current_user.id,
+            dream_id=dream_id,
+            selected_thread_index=payload.selected_thread_index,
+            feedback=payload.feedback,
+            feedback_note=payload.feedback_note,
+        )
+        await db.commit()
+    except Exception as lex_err:
+        logger.warning(f"Failed to update symbol lexicon from feedback: {lex_err}")
+
     return InterpretationResponse(
         id=interp.id,
         dream_id=interp.dream_id,
@@ -607,4 +633,97 @@ async def submit_interpretation_feedback(
         feedback_note=interp.feedback_note,
         created_at=interp.created_at,
     )
+
+
+@router.post("/{dream_id}/director")
+async def generate_director_script_endpoint(
+    dream_id: uuid.UUID,
+    style_id: str = "nocturne_toon",
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Generates a validated DirectorScript for the approved dream story
+    to be performed by the Three.js Dream Player.
+    """
+    from sqlalchemy import select
+
+    from ..models.entity import DreamEntityLink, Entity
+    from ..stages.director import director_service
+
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    version = await repo.get_approved_version(dream_id) or await repo.get_latest_version(dream_id)
+    if not version:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No reconstructed story exists to direct. Reconstruct and approve the dream first.",
+        )
+
+    # Fetch linked entities for cast
+    stmt = (
+        select(Entity)
+        .join(DreamEntityLink, Entity.id == DreamEntityLink.entity_id)
+        .where(DreamEntityLink.dream_id == dream_id)
+    )
+    result = await db.execute(stmt)
+    entities = result.scalars().all()
+    cast_list = [
+        {"entity_id": str(e.id), "name": e.canonical_name, "type": e.type}
+        for e in entities
+        if e.type in ("person", "creature", "symbol")
+    ]
+
+    try:
+        script = await director_service.generate_director_script(
+            story=version.story_json,
+            style_id=style_id,
+            cast=cast_list,
+        )
+
+        version.director_script_json = script.model_dump()
+        await db.commit()
+        await db.refresh(version)
+        return script.model_dump()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Director script generation failed: {exc!s}",
+        ) from exc
+
+
+@router.get("/{dream_id}/director")
+async def get_director_script_endpoint(
+    dream_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Retrieves the saved DirectorScript for the dream, or generates one if missing.
+    """
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    version = await repo.get_approved_version(dream_id) or await repo.get_latest_version(dream_id)
+    if not version:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No story version found for this dream.",
+        )
+
+    if version.director_script_json:
+        return version.director_script_json
+
+    # Auto-generate if not created yet
+    return await generate_director_script_endpoint(
+        dream_id=dream_id,
+        current_user=current_user,
+        db=db,
+    )
+
 

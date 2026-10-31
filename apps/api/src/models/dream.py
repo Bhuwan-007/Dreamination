@@ -169,6 +169,10 @@ class DreamVersion(Base):
         sa.JSON,
         nullable=True,
     )
+    director_script_json: Mapped[dict[str, Any] | None] = mapped_column(
+        sa.JSON,
+        nullable=True,
+    )
     is_approved: Mapped[bool] = mapped_column(
         sa.Boolean,
         default=False,

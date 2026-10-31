@@ -1,0 +1,58 @@
+kit_id: interior
+name: Dream Room & Attic Observatory
+description: High-ceilinged surreal chamber, tall bay windows overlooking impossible skies, mirrors, and stairs.
+
+anchors:
+  room_center:
+    pos: [0.0, 0.0, 0.0]
+    description: Center of the wooden floorboards
+  center:
+    pos: [0.0, 0.0, 0.0]
+    description: Center of the room
+  mirror:
+    pos: [-3.0, 0.0, -1.0]
+    description: Standing full-length silver mirror
+  window_bay:
+    pos: [0.0, 0.0, -5.0]
+    description: Grand arched window overlooking drifting clouds
+  stairs_bottom:
+    pos: [3.5, 0.0, 2.0]
+    description: Bottom of spiral staircase
+  stairs_top:
+    pos: [3.5, 3.5, -4.0]
+    description: Landing at top of staircase
+  doorway:
+    pos: [0.0, 0.0, 4.0]
+    description: Heavy wooden room door
+  balcony:
+    pos: [0.0, 0.5, -7.0]
+    description: Open terrace or balcony outside window
+
+props:
+  - id: full_mirror
+    name: Full-Length Silvered Standing Mirror
+    allowed_anchors: [mirror, room_center, window_bay]
+  - id: grandfather_clock
+    name: Tall Carved Pendulum Clock
+    allowed_anchors: [stairs_bottom, mirror, doorway]
+  - id: reading_chair
+    name: Deep Velvet Armchair
+    allowed_anchors: [room_center, window_bay, balcony]
+  - id: brass_telescope
+    name: Brass Stargazing Telescope on Tripod
+    allowed_anchors: [window_bay, balcony, stairs_top]
+  - id: writing_desk
+    name: Old Mahogany Writing Desk with Lantern
+    allowed_anchors: [room_center, window_bay, mirror]
+
+skies:
+  - star_trail
+  - night_halo
+  - dawn_mist
+  - overcast_dusk
+
+lights:
+  - warm_lamp
+  - moonlit_lantern
+  - starlight_glow
+  - twilight_soft

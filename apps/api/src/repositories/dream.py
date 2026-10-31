@@ -191,6 +191,23 @@ class DreamRepository(BaseScopedRepository[Dream]):
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def get_approved_version(self, dream_id: uuid.UUID) -> DreamVersion | None:
+        """Fetches the approved version for a dream, if one exists."""
+        dream = await self.get_by_id(dream_id)
+        if dream is None:
+            return None
+
+        stmt = (
+            sa.select(DreamVersion)
+            .where(
+                DreamVersion.dream_id == dream.id,
+                DreamVersion.is_approved.is_(True),
+            )
+            .order_by(DreamVersion.created_at.desc())
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def update_version(
         self,
         version_id: uuid.UUID,

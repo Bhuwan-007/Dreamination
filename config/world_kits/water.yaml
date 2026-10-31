@@ -1,0 +1,55 @@
+kit_id: water
+name: Infinite Shore & Submerged Lake
+description: Dark reflective waters, mist drifting across glassy surface, submerged stairs and lonely piers.
+
+anchors:
+  shore:
+    pos: [0.0, 0.0, 4.0]
+    description: Dark pebble shoreline
+  water_edge:
+    pos: [0.0, -0.1, 1.0]
+    description: Where rippling water touches ground
+  center:
+    pos: [0.0, -0.4, -2.0]
+    description: Shallow water center
+  deep_water:
+    pos: [0.0, -1.2, -8.0]
+    description: Deep water expanse
+  dock_end:
+    pos: [1.5, 0.3, -4.0]
+    description: Edge of wooden pier
+  submerged_step:
+    pos: [-2.0, -0.6, -1.5]
+    description: Stone steps leading below water surface
+  horizon:
+    pos: [0.0, 0.0, -18.0]
+    description: Distant water-sky boundary
+
+props:
+  - id: wooden_pier
+    name: Weathered Wooden Dock
+    allowed_anchors: [shore, dock_end, water_edge]
+  - id: submerged_stairs
+    name: Ancient Sunken Stone Steps
+    allowed_anchors: [submerged_step, water_edge]
+  - id: lonely_buoy
+    name: Rusted Bell Buoy
+    allowed_anchors: [deep_water, horizon]
+  - id: rowboat
+    name: Empty Drifting Rowboat
+    allowed_anchors: [water_edge, dock_end, deep_water]
+  - id: water_lantern
+    name: Floating Paper Lantern
+    allowed_anchors: [center, deep_water, water_edge]
+
+skies:
+  - night_halo
+  - dawn_mist
+  - overcast_dusk
+  - deepsea_aurora
+
+lights:
+  - moonlit_lantern
+  - underwater_teal
+  - twilight_soft
+  - foggy_dawn

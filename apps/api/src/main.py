@@ -8,6 +8,8 @@ from .logging import SafeRequestLoggingMiddleware, logger, setup_logging
 from .routes.auth import router as auth_router
 from .routes.dreams import router as dreams_router
 from .routes.health import router as health_router
+from .routes.insights import router as insights_router
+from .routes.lexicon import router as lexicon_router
 
 
 @asynccontextmanager
@@ -54,6 +56,8 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router)
     app.include_router(dreams_router)
+    app.include_router(lexicon_router, prefix="/lexicon", tags=["lexicon"])
+    app.include_router(insights_router, prefix="/insights", tags=["insights"])
 
     return app
 

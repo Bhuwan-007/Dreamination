@@ -1,0 +1,55 @@
+kit_id: void
+name: The Lucid Void & Drifting Geometry
+description: Boundless obsidian floor, floating doorways, suspended pendulum clocks, and cosmic halos.
+
+anchors:
+  door_far:
+    pos: [0.0, 0.0, -8.0]
+    description: Freestanding portal archway in the distance
+  door_near:
+    pos: [0.0, 0.0, 4.0]
+    description: Portal threshold near camera
+  center:
+    pos: [0.0, 0.0, 0.0]
+    description: Center of the obsidian plane
+  center_left:
+    pos: [-3.0, 0.0, 0.0]
+    description: Left clearing
+  center_right:
+    pos: [3.0, 0.0, 0.0]
+    description: Right clearing
+  left_sky:
+    pos: [-4.0, 3.5, -4.0]
+    description: Floating elevation in left space
+  right_sky:
+    pos: [4.0, 3.0, -5.0]
+    description: Floating elevation in right space
+
+props:
+  - id: stone_arch
+    name: Freestanding Ancient Stone Doorframe
+    allowed_anchors: [door_far, door_near, center]
+  - id: floating_clock_1
+    name: Suspended Melting Roman Clock
+    allowed_anchors: [left_sky, right_sky, center_left]
+  - id: floating_clock_2
+    name: Suspended Brass Astral Clock
+    allowed_anchors: [right_sky, left_sky, center_right]
+  - id: lantern_pillar
+    name: Stone Pedestal with Golden Lantern
+    allowed_anchors: [center_left, center_right, center]
+  - id: floating_mirror
+    name: Silver Oval Mirror Suspended in Air
+    allowed_anchors: [center, right_sky, door_far]
+
+skies:
+  - night_halo
+  - star_trail
+  - obsidian_nebula
+  - amber_glow
+
+lights:
+  - moonlit_lantern
+  - golden_halo
+  - void_luminescence
+  - twilight_soft

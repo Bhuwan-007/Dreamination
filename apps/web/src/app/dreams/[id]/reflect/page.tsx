@@ -181,12 +181,20 @@ export default function ReflectPage() {
             </h1>
           </div>
 
-          <Link
-            href={`/dreams/${dreamId}/theater`}
-            className="text-xs font-serif text-mist hover:text-lantern transition-colors"
-          >
-            Skip reflection →
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/lexicon"
+              className="hidden sm:inline text-xs font-serif text-mist hover:text-lantern transition-colors"
+            >
+              Lexicon ↗
+            </Link>
+            <Link
+              href={`/dreams/${dreamId}/theater`}
+              className="text-xs font-serif text-mist hover:text-lantern transition-colors"
+            >
+              Skip reflection →
+            </Link>
+          </div>
         </div>
       </header>
 

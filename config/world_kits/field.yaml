@@ -1,0 +1,55 @@
+kit_id: field
+name: Open Meadow & Rolling Hills
+description: Wide open rolling fields under expansive dream skies, sparse wildflowers and gentle hills.
+
+anchors:
+  origin:
+    pos: [0.0, 0.0, 0.0]
+    description: Center clearing ground level
+  center:
+    pos: [0.0, 0.0, 0.0]
+    description: Center of the field
+  lone_tree:
+    pos: [4.5, 0.0, -6.0]
+    description: Underneath a solitary ancient hill tree
+  path_start:
+    pos: [-3.0, 0.0, 5.0]
+    description: Beginning of the dirt trail
+  path_end:
+    pos: [2.0, 0.0, -8.0]
+    description: Trail vanishing into the distant horizon
+  horizon:
+    pos: [0.0, 0.0, -15.0]
+    description: Far hill line
+  hilltop:
+    pos: [5.0, 2.5, -4.0]
+    description: Elevated ridge overlooking the plain
+
+props:
+  - id: lone_tree
+    name: Ancient Solitary Tree
+    allowed_anchors: [lone_tree, center, horizon]
+  - id: wooden_fence
+    name: Weathered Split-Rail Fence
+    allowed_anchors: [path_start, path_end, hilltop]
+  - id: stone_cairn
+    name: Balanced Stone Marker
+    allowed_anchors: [center, hilltop, origin]
+  - id: wildflower_patch
+    name: Cluster of Luminescent Wildflowers
+    allowed_anchors: [center, path_start, lone_tree]
+  - id: lantern_post
+    name: Wooden Lantern Post
+    allowed_anchors: [path_start, center, lone_tree]
+
+skies:
+  - night_halo
+  - star_trail
+  - dawn_mist
+  - amber_glow
+
+lights:
+  - moonlit_lantern
+  - twilight_soft
+  - sunburst
+  - foggy_dawn

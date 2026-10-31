@@ -1,0 +1,54 @@
+kit_id: corridor
+name: Institutional Hallway & Labyrinth
+description: Long quiet corridors, institutional doorways, lockers, and shifting perspective thresholds.
+
+anchors:
+  door_near:
+    pos: [0.0, 0.0, 4.0]
+    description: Nearest threshold entrance
+  door_far:
+    pos: [0.0, 0.0, -10.0]
+    description: Distant door at end of the hall
+  center:
+    pos: [0.0, 0.0, 0.0]
+    description: Center corridor intersection
+  left_wall:
+    pos: [-2.0, 0.0, -2.0]
+    description: Alongside the left lockers or wall
+  right_wall:
+    pos: [2.0, 0.0, -2.0]
+    description: Alongside the right lockers or wall
+  threshold:
+    pos: [0.0, 0.0, -5.0]
+    description: Midway hallway doorframe
+  alcove:
+    pos: [-2.5, 0.0, 1.0]
+    description: Recessed shadow alcove
+
+props:
+  - id: locker_row
+    name: Metallic Locker Row
+    allowed_anchors: [left_wall, right_wall]
+  - id: classroom_door
+    name: Frosted Glass Institutional Door
+    allowed_anchors: [door_near, door_far, threshold]
+  - id: flickering_tube
+    name: Overhead Strip Fluorescent
+    allowed_anchors: [center, threshold, alcove]
+  - id: drinking_fountain
+    name: Wall Water Fountain
+    allowed_anchors: [right_wall, alcove]
+  - id: exit_sign
+    name: Glowing Green Exit Sign
+    allowed_anchors: [door_far, threshold]
+
+skies:
+  - interior_ceiling
+  - night_halo
+  - twilight_indigo
+
+lights:
+  - institutional_flicker
+  - moonlit_lantern
+  - dim_lamp
+  - green_glow

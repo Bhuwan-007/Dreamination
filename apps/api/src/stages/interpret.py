@@ -378,12 +378,24 @@ async def run_interpretation_stage(
             if isinstance(b, dict) and b.get("text")
         )
 
-    # 4. Generate interpretation threads
+    # 4. Retrieve personal history and learned symbol meanings (Phase 7)
+    history_data: dict[str, Any] = {}
+    try:
+        from .graph import graph_service
+        history_data = await graph_service.get_relevant_history(
+            db, user_id=user_id, current_dream_id=dream_id, limit=3
+        )
+    except Exception as hist_err:
+        logger.warning(f"Could not retrieve relevant history for dream {dream_id}: {hist_err}")
+
+    # 5. Generate interpretation threads
     output = await interpretation_service.interpret(
         notes=notes,
         story_summary=story_summary,
         answers=answers,
         life_context=life_context,
+        history=history_data.get("similar_dreams", []),
+        learned_meanings=history_data.get("learned_meanings", []),
     )
 
     # 5. Persist record

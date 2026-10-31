@@ -1,0 +1,55 @@
+kit_id: city
+name: Nocturnal City & Empty Crossroads
+description: Rained-on asphalt, sodium streetlamps, shadowy alleyways, and quiet urban thresholds.
+
+anchors:
+  crossroad:
+    pos: [0.0, 0.0, 0.0]
+    description: Center intersection of wet streets
+  center:
+    pos: [0.0, 0.0, 0.0]
+    description: Center square
+  sidewalk_near:
+    pos: [2.5, 0.15, 3.0]
+    description: Forefront curb and sidewalk
+  sidewalk_far:
+    pos: [-2.5, 0.15, -6.0]
+    description: Distant curb under lamp
+  alley_entrance:
+    pos: [-4.5, 0.0, -2.0]
+    description: Dark narrow passage between buildings
+  lamppost:
+    pos: [3.0, 0.0, 1.0]
+    description: Directly beneath warm streetlamp
+  storefront:
+    pos: [-3.0, 0.0, 2.0]
+    description: Shuttered dark shop window
+
+props:
+  - id: street_lamp
+    name: Cast Iron Sodium Streetlamp
+    allowed_anchors: [lamppost, sidewalk_near, crossroad]
+  - id: brick_archway
+    name: Narrow Brick Alley Arch
+    allowed_anchors: [alley_entrance, sidewalk_far]
+  - id: storefront_window
+    name: Dark Glazed Display Window
+    allowed_anchors: [storefront, sidewalk_near]
+  - id: traffic_signal
+    name: Suspended Amber Signal
+    allowed_anchors: [crossroad, center]
+  - id: bench_stone
+    name: Wet Stone City Bench
+    allowed_anchors: [sidewalk_near, sidewalk_far]
+
+skies:
+  - overcast_dusk
+  - night_halo
+  - city_glow
+  - star_trail
+
+lights:
+  - sodium_amber
+  - moonlit_lantern
+  - neon_reflection
+  - twilight_soft

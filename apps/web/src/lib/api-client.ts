@@ -177,11 +177,25 @@ export class DreamApiClient {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       ...options,
       headers,
       credentials: "include", // send session cookie
     });
+
+    if (response.status === 401 && !endpoint.startsWith("/auth")) {
+      // Token may be expired or invalid; re-authenticate and retry once
+      this.setToken(null);
+      const newToken = await this.ensureAuthenticated();
+      if (newToken) {
+        headers["Authorization"] = `Bearer ${newToken}`;
+        response = await fetch(url, {
+          ...options,
+          headers,
+          credentials: "include",
+        });
+      }
+    }
 
     if (!response.ok) {
       let errorData;
@@ -348,6 +362,98 @@ export class DreamApiClient {
       body: JSON.stringify(payload),
     });
   }
+
+  // --- Personal Dream Graph & Lexicon (Phase 7) ---
+  async getLexicon(): Promise<LexiconEntry[]> {
+    return this.request<LexiconEntry[]>("/lexicon");
+  }
+
+  async getDreamWeather(): Promise<DreamWeatherResponse> {
+    return this.request<DreamWeatherResponse>("/insights/weather");
+  }
+
+  // --- Director Script Stage (Phase 8) ---
+  async getDirectorScript(dreamId: string): Promise<DirectorScriptData> {
+    return this.request<DirectorScriptData>(`/dreams/${dreamId}/director`);
+  }
+
+  async generateDirectorScript(dreamId: string, styleId = "nocturne_toon"): Promise<DirectorScriptData> {
+    return this.request<DirectorScriptData>(`/dreams/${dreamId}/director?style_id=${styleId}`, {
+      method: "POST",
+    });
+  }
+}
+
+export interface DirectorBeatData {
+  t: number;
+  actor: string;
+  action: string;
+  args?: Record<string, any>;
+}
+
+export interface DirectorCastMemberData {
+  entity_id?: string | null;
+  name: string;
+  spawn: string;
+  face_visibility?: "full" | "shadowed" | "hidden";
+}
+
+export interface DirectorWorldData {
+  kit: string;
+  sky: string;
+  light: string;
+  fog?: { density?: number; color?: string };
+  weather?: "rain" | "snow" | "ash" | "none";
+  props?: Array<{ id: string; anchor: string }>;
+  effects?: Array<{ type: string; at: number; duration: number; parameters?: Record<string, any> }>;
+}
+
+export interface DirectorSceneData {
+  scene_id: number;
+  transition_in?: "cut" | "dissolve" | "morph" | "submerge_fade";
+  world: DirectorWorldData;
+  cast?: DirectorCastMemberData[];
+  beats: DirectorBeatData[];
+  narration?: string | null;
+  ambient?: string;
+  sound_motif?: string | null;
+}
+
+export interface DirectorScriptData {
+  title: string;
+  style_id: string;
+  scenes: DirectorSceneData[];
+}
+
+export interface MeaningDistributionItem {
+  label: string;
+  probability: number;
+  evidence_count: number;
+  updated_at?: string;
+}
+
+export interface LexiconEntry {
+  entity_id: string;
+  canonical_name: string;
+  first_seen_dream_id?: string | null;
+  meanings: MeaningDistributionItem[];
+}
+
+export interface EmotionCount {
+  emotion: string;
+  count: number;
+}
+
+export interface RecurringMotif {
+  name: string;
+  appearances: number;
+}
+
+export interface DreamWeatherResponse {
+  dream_count: number;
+  dominant_emotions: EmotionCount[];
+  recurring_motifs: RecurringMotif[];
+  weather_summary: string;
 }
 
 export interface EvidenceItem {

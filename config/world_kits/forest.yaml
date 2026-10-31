@@ -1,0 +1,55 @@
+kit_id: forest
+name: Enchanted Deep Forest & Sacred Grove
+description: Ancient monumental trunks, glowing moss carpets, canopy clearing, and overgrown stone gates.
+
+anchors:
+  clearing_center:
+    pos: [0.0, 0.0, 0.0]
+    description: Mossy circular clearing center
+  center:
+    pos: [0.0, 0.0, 0.0]
+    description: Center clearing
+  old_oak:
+    pos: [-4.0, 0.0, -5.0]
+    description: Base of gnarled massive ancient trunk
+  moss_stone:
+    pos: [2.5, 0.0, -1.5]
+    description: Flat moss-covered altar stone
+  gate_arch:
+    pos: [0.0, 0.0, -9.0]
+    description: Overgrown vine-wrapped stone gateway
+  trail_in:
+    pos: [0.0, 0.0, 5.0]
+    description: Winding leaf-strewn footpath entering the grove
+  deep_woods:
+    pos: [5.0, 0.0, -7.0]
+    description: Dense shadowy silhouette understory
+
+props:
+  - id: ancient_tree
+    name: Colossal Hollow Oak Trunk
+    allowed_anchors: [old_oak, deep_woods, clearing_center]
+  - id: mossy_boulder
+    name: Velvet Moss Covered Stone
+    allowed_anchors: [moss_stone, clearing_center, old_oak]
+  - id: stone_gateway
+    name: Ancient Ruined Forest Gate
+    allowed_anchors: [gate_arch, trail_in]
+  - id: spore_mushrooms
+    name: Cluster of Bioluminescent Spores
+    allowed_anchors: [moss_stone, old_oak, clearing_center]
+  - id: hanging_lanterns
+    name: Willow Lanterns Swaying in Branches
+    allowed_anchors: [clearing_center, old_oak, gate_arch]
+
+skies:
+  - forest_canopy
+  - night_halo
+  - dawn_mist
+  - star_trail
+
+lights:
+  - dappled_sunlight
+  - emerald_mist
+  - moonlit_lantern
+  - twilight_soft

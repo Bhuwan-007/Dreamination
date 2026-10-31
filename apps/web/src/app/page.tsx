@@ -24,6 +24,12 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-4">
+          <a
+            href="/lexicon"
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-lantern/30 bg-forest-night/80 text-xs font-serif text-lantern hover:bg-forest-night transition-colors"
+          >
+            <span>Personal Lexicon</span>
+          </a>
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-graphite bg-slate/60 text-xs text-mist">
             <span className="w-2 h-2 rounded-full bg-leaf animate-pulse" />
             <span>Core Online · Free-First</span>

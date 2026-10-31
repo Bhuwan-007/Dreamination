@@ -30,17 +30,17 @@ shots:
       amplitude_y: 0.12
     description: "Vast landscape shot dwarfing the traveler against the horizon."
 
-  hero_low:
-    name: "Hero Low Angle"
+  two_shot:
+    name: "Two Shot Dialogue"
     fov: 38
-    distance: 4.2
-    height: 0.6
-    target_offset: [0.0, 1.1, 0.0]
+    distance: 5.0
+    height: 1.6
+    target_offset: [0.0, 1.2, 0.0]
     drift:
-      speed: 0.0004
-      amplitude_x: 0.15
-      amplitude_y: 0.08
-    description: "Low-angle cinematic framing looking up at the traveler."
+      speed: 0.0003
+      amplitude_x: 0.12
+      amplitude_y: 0.06
+    description: "Medium framing balancing two interlocutors or character and key focal prop."
 
   close_up:
     name: "Intimate Close-Up"
@@ -54,17 +54,17 @@ shots:
       amplitude_y: 0.05
     description: "Focused view on the traveler's face and visemes."
 
-  tracking:
-    name: "Dynamic Tracking"
-    fov: 40
-    distance: 5.5
-    height: 1.8
-    target_offset: [0.0, 0.9, 0.0]
+  hero_low:
+    name: "Hero Low Angle"
+    fov: 38
+    distance: 4.2
+    height: 0.6
+    target_offset: [0.0, 1.1, 0.0]
     drift:
-      speed: 0.0005
-      amplitude_x: 0.25
-      amplitude_y: 0.1
-    description: "Camera smoothly follows actor locomotion along path."
+      speed: 0.0004
+      amplitude_x: 0.15
+      amplitude_y: 0.08
+    description: "Low-angle cinematic framing looking up at the traveler."
 
   over_shoulder:
     name: "Over The Shoulder"
@@ -77,6 +77,18 @@ shots:
       amplitude_x: 0.1
       amplitude_y: 0.06
     description: "Subject framed past an occluding shoulder or doorway edge."
+
+  top_down:
+    name: "Top-Down God's Eye"
+    fov: 45
+    distance: 8.5
+    height: 8.0
+    target_offset: [0.0, 0.0, 0.0]
+    drift:
+      speed: 0.0002
+      amplitude_x: 0.1
+      amplitude_y: 0.1
+    description: "Overhead plan view emphasizing labyrinthine floor patterns and geometry."
 
   dolly_in:
     name: "Slow Dolly In"
@@ -91,3 +103,26 @@ shots:
       dolly_rate: -0.15
     description: "Hypnotic forward push toward the focal subject."
 
+  tracking:
+    name: "Dynamic Tracking"
+    fov: 40
+    distance: 5.5
+    height: 1.8
+    target_offset: [0.0, 0.9, 0.0]
+    drift:
+      speed: 0.0005
+      amplitude_x: 0.25
+      amplitude_y: 0.1
+    description: "Camera smoothly follows actor locomotion along path."
+
+  orbit:
+    name: "Slow Dream Orbit"
+    fov: 36
+    distance: 4.8
+    height: 2.0
+    target_offset: [0.0, 1.1, 0.0]
+    drift:
+      speed: 0.0008
+      amplitude_x: 0.4
+      amplitude_y: 0.15
+    description: "Revolving circular perspective around a frozen or transformative moment."
