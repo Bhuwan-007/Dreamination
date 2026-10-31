@@ -296,7 +296,6 @@ class ReconstructionService:
         primary_symbol = ctx["primary_symbol"]
         primary_character = ctx["primary_character"]
         primary_emotion = ctx["primary_emotion"]
-        secondary_place = ctx["secondary_place"] or "the quiet interior"
 
         title = (
             f"{primary_place.title()}: The {primary_symbol.title()}"

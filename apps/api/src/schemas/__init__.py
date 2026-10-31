@@ -9,6 +9,14 @@ from .extraction import (
     ExtractedTransition,
     ExtractionOutput,
 )
+from .interpretation import (
+    EvidenceItem,
+    InterpretationFeedbackRequest,
+    InterpretationOutput,
+    InterpretationResponse,
+    InterpretationThread,
+    InterpretedSymbol,
+)
 from .reconstruction import (
     ApproveDreamRequest,
     ApproveDreamResponse,
@@ -29,10 +37,16 @@ __all__ = [
     "DialogueItem",
     "DreamFragment",
     "DreamVersionResponse",
+    "EvidenceItem",
     "ExtractedEmotion",
     "ExtractedEntity",
     "ExtractedTransition",
     "ExtractionOutput",
+    "InterpretationFeedbackRequest",
+    "InterpretationOutput",
+    "InterpretationResponse",
+    "InterpretationThread",
+    "InterpretedSymbol",
     "ReconstructDreamRequest",
     "ReconstructedScene",
     "ReconstructionOutput",

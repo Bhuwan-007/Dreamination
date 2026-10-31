@@ -159,14 +159,19 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
     }
   };
 
-  // Approve Dream and Step Through to 3D Player
+  // Approve Dream and Step Through to Reflection
   const handleApprove = async () => {
     if (isApproving || !currentVersion) return;
+    if (isApproved) {
+      router.push(`/dreams/${dreamId}/reflect`);
+      return;
+    }
     setIsApproving(true);
 
     try {
       await apiClient.approveDream(dreamId, currentVersion.id);
       setIsApproved(true);
+      router.push(`/dreams/${dreamId}/reflect`);
     } catch (err: any) {
       console.error("Failed to approve dream:", err);
       alert("Failed to approve dream: " + (err.message || "Unknown error"));
@@ -516,11 +521,11 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
                     {isApproved ? (
                       <>
                         <CheckCircle2 className="w-4 h-4 text-void" />
-                        <span>That&apos;s my dream · Step Through</span>
+                        <span>Story Approved · Reflect</span>
                       </>
                     ) : (
                       <>
-                        <span>That&apos;s my dream · Approve</span>
+                        <span>That&apos;s my dream · Reflect</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}

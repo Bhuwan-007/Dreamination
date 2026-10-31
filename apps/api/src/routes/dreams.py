@@ -13,7 +13,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,9 +21,15 @@ from ..auth import get_current_user
 from ..database import get_db
 from ..followups import FollowupResponse, generate_followup_questions
 from ..models.dream import DreamStatus
+from ..models.interpretation import Interpretation
 from ..models.user import User
 from ..repositories.dream import DreamRepository
 from ..schemas.extraction import ExtractionOutput
+from ..schemas.interpretation import (
+    InterpretationFeedbackRequest,
+    InterpretationResponse,
+    InterpretationThread,
+)
 from ..schemas.reconstruction import (
     ApproveDreamRequest,
     ApproveDreamResponse,
@@ -34,6 +40,7 @@ from ..schemas.reconstruction import (
     SceneRepairRequest,
 )
 from ..stages.extract import run_extraction_and_ingest
+from ..stages.interpret import run_interpretation_stage
 from ..stages.reconstruct import (
     run_reconstruction_pipeline,
     run_scene_repair_pipeline,
@@ -208,6 +215,21 @@ async def get_dream(
         created_at=decrypted.created_at,
         updated_at=decrypted.updated_at,
     )
+
+
+@router.delete("/{dream_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+async def delete_dream(
+    dream_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Deletes a dream and all cascaded versions, interpretations, and entity links."""
+    repo = DreamRepository(db, current_user.id)
+    deleted = await repo.delete(dream_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{dream_id}/followups", response_model=FollowupResponse)
@@ -467,4 +489,122 @@ async def approve_dream(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Approval failed: {exc!s}",
         ) from exc
+
+
+@router.post("/{dream_id}/interpret", response_model=InterpretationResponse)
+async def generate_or_get_interpretation(
+    dream_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> InterpretationResponse:
+    """
+    Generates or retrieves 2-3 grounded psychological reflection threads for the dream.
+    """
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    try:
+        interp = await run_interpretation_stage(db, dream_id=dream_id, user_id=current_user.id)
+        return InterpretationResponse(
+            id=interp.id,
+            dream_id=interp.dream_id,
+            threads=[InterpretationThread.model_validate(t) for t in interp.threads_json],
+            selected_thread_index=interp.selected_thread_index,
+            feedback=interp.feedback,
+            feedback_note=interp.feedback_note,
+            created_at=interp.created_at,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Interpretation generation failed: {exc!s}",
+        ) from exc
+
+
+@router.get("/{dream_id}/interpret", response_model=InterpretationResponse | None)
+async def get_interpretation(
+    dream_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> InterpretationResponse | None:
+    """
+    Gets the existing interpretation for a dream, or returns null if not generated yet.
+    """
+    from sqlalchemy import select
+
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    stmt = (
+        select(Interpretation)
+        .where(Interpretation.dream_id == dream_id)
+        .order_by(Interpretation.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    interp = result.scalars().first()
+    if not interp:
+        return None
+
+    return InterpretationResponse(
+        id=interp.id,
+        dream_id=interp.dream_id,
+        threads=[InterpretationThread.model_validate(t) for t in interp.threads_json],
+        selected_thread_index=interp.selected_thread_index,
+        feedback=interp.feedback,
+        feedback_note=interp.feedback_note,
+        created_at=interp.created_at,
+    )
+
+
+@router.post("/{dream_id}/interpret/feedback", response_model=InterpretationResponse)
+async def submit_interpretation_feedback(
+    dream_id: uuid.UUID,
+    payload: InterpretationFeedbackRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> InterpretationResponse:
+    """
+    Stores user resonance feedback on reflection threads ('resonates' / 'felt_different')
+    and prepares event for lexicon distribution updating.
+    """
+    from sqlalchemy import select
+
+    repo = DreamRepository(db, current_user.id)
+    dream = await repo.get_by_id(dream_id)
+    if not dream:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dream not found.")
+
+    stmt = (
+        select(Interpretation)
+        .where(Interpretation.dream_id == dream_id)
+        .order_by(Interpretation.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    interp = result.scalars().first()
+    if not interp:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No interpretation exists for this dream yet.",
+        )
+
+    interp.feedback = payload.feedback
+    interp.selected_thread_index = payload.selected_thread_index
+    interp.feedback_note = payload.feedback_note
+
+    await db.commit()
+    await db.refresh(interp)
+
+    return InterpretationResponse(
+        id=interp.id,
+        dream_id=interp.dream_id,
+        threads=[InterpretationThread.model_validate(t) for t in interp.threads_json],
+        selected_thread_index=interp.selected_thread_index,
+        feedback=interp.feedback,
+        feedback_note=interp.feedback_note,
+        created_at=interp.created_at,
+    )
 

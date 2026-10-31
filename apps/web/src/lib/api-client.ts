@@ -264,6 +264,10 @@ export class DreamApiClient {
     return this.request<DreamResponse>(`/dreams/${dreamId}`);
   }
 
+  async deleteDream(dreamId: string): Promise<void> {
+    await this.request<void>(`/dreams/${dreamId}`, { method: "DELETE" });
+  }
+
   async getFollowupQuestions(dreamId: string): Promise<FollowupResponse> {
     return this.request<FollowupResponse>(`/dreams/${dreamId}/followups`, {
       method: "POST",
@@ -319,6 +323,60 @@ export class DreamApiClient {
       body: JSON.stringify({ version_id: versionId }),
     });
   }
+
+  // --- Interpretation & Reflection (Phase 6) ---
+  async getInterpretation(dreamId: string): Promise<InterpretationResponse | null> {
+    return this.request<InterpretationResponse | null>(`/dreams/${dreamId}/interpret`);
+  }
+
+  async generateInterpretation(dreamId: string): Promise<InterpretationResponse> {
+    return this.request<InterpretationResponse>(`/dreams/${dreamId}/interpret`, {
+      method: "POST",
+    });
+  }
+
+  async submitInterpretationFeedback(
+    dreamId: string,
+    payload: {
+      selected_thread_index?: number | null;
+      feedback: "resonates" | "felt_different" | "none";
+      feedback_note?: string | null;
+    }
+  ): Promise<InterpretationResponse> {
+    return this.request<InterpretationResponse>(`/dreams/${dreamId}/interpret/feedback`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+}
+
+export interface EvidenceItem {
+  quote_from_user: string;
+  why_it_matters: string;
+}
+
+export interface InterpretedSymbol {
+  name: string;
+  possible_meaning: string;
+}
+
+export interface InterpretationThread {
+  lens: string;
+  title: string;
+  reading: string;
+  evidence: EvidenceItem[];
+  waking_life_questions: string[];
+  symbols: InterpretedSymbol[];
+}
+
+export interface InterpretationResponse {
+  id: string;
+  dream_id: string;
+  threads: InterpretationThread[];
+  selected_thread_index?: number | null;
+  feedback: "resonates" | "felt_different" | "none";
+  feedback_note?: string | null;
+  created_at: string;
 }
 
 export const apiClient = new DreamApiClient();
