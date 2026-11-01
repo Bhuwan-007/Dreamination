@@ -96,11 +96,13 @@ export default function JournalPage() {
   };
 
   return (
-    <AppShell>
-      <PageBackdrop
-        src={dreams.length === 0 ? "/art/empty-book.webp" : "/art/fragments.webp"}
-        opacity={0.42}
-      />
+    <div data-theme="night" className="min-h-screen bg-bg text-text">
+      <AppShell>
+        <PageBackdrop
+          src={dreams.length === 0 ? "/art/empty-book.webp" : "/art/fragments.webp"}
+          alt="Journal memories backdrop"
+          opacity={0.68}
+        />
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
         {/* Page Title & Vision */}
         <header className="space-y-3 pb-6 border-b border-hairline">
@@ -223,6 +225,7 @@ export default function JournalPage() {
         )}
       </div>
     </AppShell>
+    </div>
   );
 }
 

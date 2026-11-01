@@ -185,9 +185,12 @@ export default function ReconstructionReviewPage({ params }: PageProps) {
   };
 
   return (
-    <div className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-32">
+    <div
+      data-theme="night"
+      className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-32"
+    >
       {/* 1. Luminous Weave Background Art */}
-      <PageBackdrop src="/art/weave.webp" opacity={0.42} priority />
+      <PageBackdrop src="/art/weave.webp" alt="Weave story backdrop" opacity={0.68} priority />
 
       {/* 2. Top Navigation Bar */}
       <header className="relative z-10 w-full border-b border-hairline/60 bg-void/75 backdrop-blur-md px-6 py-4 flex items-center justify-between">

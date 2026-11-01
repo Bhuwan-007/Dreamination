@@ -47,11 +47,13 @@ export default function LexiconPage() {
   }, []);
 
   return (
-    <AppShell>
-      <PageBackdrop
-        src={lexicon.length === 0 ? "/art/empty-balcony.webp" : "/art/remember.webp"}
-        opacity={0.42}
-      />
+    <div data-theme="night" className="min-h-screen bg-bg text-text">
+      <AppShell>
+        <PageBackdrop
+          src={lexicon.length === 0 ? "/art/empty-pool.webp" : "/art/remember.webp"}
+          alt="Symbol constellation backdrop"
+          opacity={0.68}
+        />
 
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-12">
         {/* Header inside AppShell */}
@@ -215,5 +217,6 @@ export default function LexiconPage() {
         )}
       </div>
     </AppShell>
+    </div>
   );
 }

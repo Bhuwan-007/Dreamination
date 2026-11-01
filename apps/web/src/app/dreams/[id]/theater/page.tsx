@@ -148,8 +148,8 @@ export default function DreamTheaterPage() {
 
   return (
     <div data-theme="night" className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-24">
-      {/* Background artwork ambience with heavy scrim */}
-      <PageBackdrop src="/art/night-void.webp" opacity={0.38} scrim="heavy" priority />
+      {/* Theater page banner with watch-frame art */}
+      <PageBackdrop src="/art/watch-frame.webp" alt="3D Dream Theater banner" opacity={0.68} priority />
 
       {/* Header Bar */}
       <header className="relative z-20 w-full border-b border-hairline/60 bg-surface/85 backdrop-blur-md px-6 py-4 flex items-center justify-between">

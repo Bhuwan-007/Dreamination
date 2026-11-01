@@ -113,7 +113,7 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <PageBackdrop src="/art/vault.webp" opacity={0.42} />
+      <PageBackdrop src="/art/vault.webp" alt="The Vault header band" opacity={0.68} headerBandOnly />
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-12">
         <header className="space-y-3 pb-6 border-b border-hairline">
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-accent">

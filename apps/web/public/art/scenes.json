@@ -1,0 +1,550 @@
+{
+  "portal-window": {
+    "key": "portal-window",
+    "filename": "portal-window.webp",
+    "dimensions": {
+      "width": 1376,
+      "height": 768
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.0603,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 32.23,
+        "meanLuminance": 54.1
+      },
+      {
+        "rank": 2,
+        "x": 0.0603,
+        "y": 0.2409,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 38.78,
+        "meanLuminance": 61.8
+      },
+      {
+        "rank": 3,
+        "x": 0.54,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 44.62,
+        "meanLuminance": 61.8
+      }
+    ],
+    "best": {
+      "x": 0.0603,
+      "y": 0.0794,
+      "width": 0.3997,
+      "height": 0.2995
+    },
+    "anchors": [
+      {
+        "id": "arch",
+        "label": "Arch interior",
+        "x": 0.5,
+        "y": 0.42,
+        "r": 0.14
+      }
+    ]
+  },
+  "night-void": {
+    "key": "night-void",
+    "filename": "night-void.webp",
+    "dimensions": {
+      "width": 1376,
+      "height": 768
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.0603,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 8.05,
+        "meanLuminance": 19.9
+      },
+      {
+        "rank": 2,
+        "x": 0.0603,
+        "y": 0.2409,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 11.6,
+        "meanLuminance": 29.2
+      },
+      {
+        "rank": 3,
+        "x": 0.0603,
+        "y": 0.4023,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 15.76,
+        "meanLuminance": 48.8
+      }
+    ],
+    "best": {
+      "x": 0.0603,
+      "y": 0.0794,
+      "width": 0.3997,
+      "height": 0.2995
+    },
+    "anchors": [
+      {
+        "id": "door",
+        "label": "Central glowing doorway",
+        "x": 0.5,
+        "y": 0.54,
+        "r": 0.14
+      },
+      {
+        "id": "floating-frame",
+        "label": "Large floating frame",
+        "x": 0.76,
+        "y": 0.48,
+        "r": 0.15
+      }
+    ]
+  },
+  "fragments": {
+    "key": "fragments",
+    "filename": "fragments.webp",
+    "dimensions": {
+      "width": 1264,
+      "height": 848
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.0601,
+        "y": 0.0802,
+        "width": 0.4003,
+        "height": 0.2995,
+        "score": 20.48,
+        "meanLuminance": 25.3
+      },
+      {
+        "rank": 2,
+        "x": 0.1005,
+        "y": 0.2406,
+        "width": 0.4003,
+        "height": 0.2995,
+        "score": 32.79,
+        "meanLuminance": 32.6
+      },
+      {
+        "rank": 3,
+        "x": 0.3022,
+        "y": 0.0802,
+        "width": 0.4003,
+        "height": 0.2995,
+        "score": 42.72,
+        "meanLuminance": 41.1
+      }
+    ],
+    "best": {
+      "x": 0.0601,
+      "y": 0.0802,
+      "width": 0.4003,
+      "height": 0.2995
+    }
+  },
+  "weave": {
+    "key": "weave",
+    "filename": "weave.webp",
+    "dimensions": {
+      "width": 1264,
+      "height": 848
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.0601,
+        "y": 0.6014,
+        "width": 0.4003,
+        "height": 0.2995,
+        "score": 52.08,
+        "meanLuminance": 68.5
+      },
+      {
+        "rank": 2,
+        "x": 0.504,
+        "y": 0.1604,
+        "width": 0.4003,
+        "height": 0.2995,
+        "score": 52.85,
+        "meanLuminance": 143.3
+      },
+      {
+        "rank": 3,
+        "x": 0.0601,
+        "y": 0.0802,
+        "width": 0.4003,
+        "height": 0.2995,
+        "score": 53.96,
+        "meanLuminance": 68.5
+      }
+    ],
+    "best": {
+      "x": 0.0601,
+      "y": 0.6014,
+      "width": 0.4003,
+      "height": 0.2995
+    },
+    "anchors": [
+      {
+        "id": "castle",
+        "label": "Golden castle",
+        "x": 0.52,
+        "y": 0.44,
+        "r": 0.16
+      }
+    ]
+  },
+  "scenery-color": {
+    "key": "scenery-color",
+    "filename": "scenery-color.webp",
+    "dimensions": {
+      "width": 1376,
+      "height": 768
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.3401,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 25.21,
+        "meanLuminance": 201
+      },
+      {
+        "rank": 2,
+        "x": 0.3401,
+        "y": 0.2409,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 34.99,
+        "meanLuminance": 202.7
+      },
+      {
+        "rank": 3,
+        "x": 0.54,
+        "y": 0.1198,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 38.82,
+        "meanLuminance": 196.7
+      }
+    ],
+    "best": {
+      "x": 0.3401,
+      "y": 0.0794,
+      "width": 0.3997,
+      "height": 0.2995
+    },
+    "anchors": [
+      {
+        "id": "castle",
+        "label": "Floating castle",
+        "x": 0.8,
+        "y": 0.25,
+        "r": 0.13
+      },
+      {
+        "id": "arch",
+        "label": "Stone waterfall arch",
+        "x": 0.5,
+        "y": 0.58,
+        "r": 0.15
+      }
+    ]
+  },
+  "scenery-color-tall": {
+    "key": "scenery-color-tall",
+    "filename": "scenery-color-tall.webp",
+    "dimensions": {
+      "width": 768,
+      "height": 1376
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.5039,
+        "y": 0.3198,
+        "width": 0.3997,
+        "height": 0.3001,
+        "score": 39.66,
+        "meanLuminance": 159.5
+      },
+      {
+        "rank": 2,
+        "x": 0.4635,
+        "y": 0.1199,
+        "width": 0.3997,
+        "height": 0.3001,
+        "score": 44.87,
+        "meanLuminance": 114.5
+      },
+      {
+        "rank": 3,
+        "x": 0.1406,
+        "y": 0.0799,
+        "width": 0.3997,
+        "height": 0.3001,
+        "score": 48.11,
+        "meanLuminance": 67.3
+      }
+    ],
+    "best": {
+      "x": 0.5039,
+      "y": 0.3198,
+      "width": 0.3997,
+      "height": 0.3001
+    },
+    "anchors": [
+      {
+        "id": "castle",
+        "label": "Floating castle",
+        "x": 0.72,
+        "y": 0.22,
+        "r": 0.13
+      },
+      {
+        "id": "arch",
+        "label": "Stone waterfall arch",
+        "x": 0.5,
+        "y": 0.52,
+        "r": 0.15
+      }
+    ]
+  },
+  "reflect": {
+    "key": "reflect",
+    "filename": "reflect.webp",
+    "dimensions": {
+      "width": 1376,
+      "height": 768
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.2602,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 55.49,
+        "meanLuminance": 164.5
+      },
+      {
+        "rank": 2,
+        "x": 0.54,
+        "y": 0.2813,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 56.81,
+        "meanLuminance": 73
+      },
+      {
+        "rank": 3,
+        "x": 0.0603,
+        "y": 0.6042,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 58.94,
+        "meanLuminance": 82.9
+      }
+    ],
+    "best": {
+      "x": 0.2602,
+      "y": 0.0794,
+      "width": 0.3997,
+      "height": 0.2995
+    }
+  },
+  "remember": {
+    "key": "remember",
+    "filename": "remember.webp",
+    "dimensions": {
+      "width": 1376,
+      "height": 768
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.4201,
+        "y": 0.4831,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 55.76,
+        "meanLuminance": 85.6
+      },
+      {
+        "rank": 2,
+        "x": 0.54,
+        "y": 0.362,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 56.85,
+        "meanLuminance": 82.2
+      },
+      {
+        "rank": 3,
+        "x": 0.1403,
+        "y": 0.5234,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 60.16,
+        "meanLuminance": 82.9
+      }
+    ],
+    "best": {
+      "x": 0.4201,
+      "y": 0.4831,
+      "width": 0.3997,
+      "height": 0.2995
+    }
+  },
+  "watch-frame": {
+    "key": "watch-frame",
+    "filename": "watch-frame.webp",
+    "dimensions": {
+      "width": 1376,
+      "height": 768
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.0603,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 55.06,
+        "meanLuminance": 73.6
+      },
+      {
+        "rank": 2,
+        "x": 0.3801,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 55.09,
+        "meanLuminance": 113.7
+      },
+      {
+        "rank": 3,
+        "x": 0.0603,
+        "y": 0.6042,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 58.91,
+        "meanLuminance": 85.4
+      }
+    ],
+    "best": {
+      "x": 0.0603,
+      "y": 0.0794,
+      "width": 0.3997,
+      "height": 0.2995
+    }
+  },
+  "vault": {
+    "key": "vault",
+    "filename": "vault.webp",
+    "dimensions": {
+      "width": 1376,
+      "height": 768
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.2602,
+        "y": 0.0794,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 48.24,
+        "meanLuminance": 134.2
+      },
+      {
+        "rank": 2,
+        "x": 0.0603,
+        "y": 0.362,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 52.67,
+        "meanLuminance": 59.7
+      },
+      {
+        "rank": 3,
+        "x": 0.1403,
+        "y": 0.2005,
+        "width": 0.3997,
+        "height": 0.2995,
+        "score": 56.39,
+        "meanLuminance": 93.6
+      }
+    ],
+    "best": {
+      "x": 0.2602,
+      "y": 0.0794,
+      "width": 0.3997,
+      "height": 0.2995
+    }
+  },
+  "cta-door": {
+    "key": "cta-door",
+    "filename": "cta-door.webp",
+    "dimensions": {
+      "width": 480,
+      "height": 270
+    },
+    "calmZones": [
+      {
+        "rank": 1,
+        "x": 0.0604,
+        "y": 0.6148,
+        "width": 0.4,
+        "height": 0.3,
+        "score": 15.98,
+        "meanLuminance": 27.7
+      },
+      {
+        "rank": 2,
+        "x": 0.5354,
+        "y": 0.6148,
+        "width": 0.4,
+        "height": 0.3,
+        "score": 17.25,
+        "meanLuminance": 29.2
+      },
+      {
+        "rank": 3,
+        "x": 0.0604,
+        "y": 0.437,
+        "width": 0.4,
+        "height": 0.3,
+        "score": 20.83,
+        "meanLuminance": 30.5
+      }
+    ],
+    "best": {
+      "x": 0.0604,
+      "y": 0.6148,
+      "width": 0.4,
+      "height": 0.3
+    },
+    "anchors": [
+      {
+        "id": "doorway",
+        "label": "Great doorway",
+        "x": 0.5,
+        "y": 0.5,
+        "r": 0.18
+      }
+    ]
+  }
+}

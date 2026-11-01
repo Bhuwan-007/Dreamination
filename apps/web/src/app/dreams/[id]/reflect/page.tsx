@@ -163,9 +163,16 @@ export default function ReflectPage() {
     : [];
 
   return (
-    <div className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-32">
+    <div
+      data-theme="night"
+      className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-32"
+    >
       {/* Background artwork ambience */}
-      <PageBackdrop src="/art/reflect.webp" opacity={0.42} />
+      <PageBackdrop
+        src={interpretation?.threads?.length === 0 ? "/art/empty-balcony.webp" : "/art/reflect.webp"}
+        alt="Reflection lanterns backdrop"
+        opacity={0.68}
+      />
 
       {/* Top Header */}
       <header className="sticky top-0 z-40 backdrop-blur-md bg-void/80 border-b border-hairline px-6 py-4">

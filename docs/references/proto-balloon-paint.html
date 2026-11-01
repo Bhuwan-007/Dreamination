@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Dream Machine — Chromatic Pigment-Balloon &amp; Living Watercolor Theatre</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Cinzel+Decorative:wght@400;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Tone.js Generative Audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        void: '#04070B',
+                        surface: '#0A1118',
+                        'surface-raised': '#121D28',
+                        cloud: '#F2EFE9',
+                        mist: '#BDCEBC',
+                        sage: '#77917F',
+                        lantern: '#E5B869',
+                        'lantern-soft': '#FCE1A6',
+                        lake: '#559CA9',
+                        leaf: '#909653',
+                        'dusk-rose': '#C9747C',
+                        hairline: 'rgba(229, 184, 105, 0.26)',
+                    },
+                    fontFamily: {
+                        mythic: ['"Cinzel Decorative"', 'serif'],
+                        display: ['"Cormorant Garamond"', 'serif'],
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        lantern: '0 0 50px -5px rgba(229, 184, 105, 0.42)',
+                        'lantern-lg': '0 0 95px -5px rgba(229, 184, 105, 0.75)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #04070B;
+            color: #F2EFE9;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #04070B;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(229, 184, 105, 0.4);
+            border-radius: 999px;
+        }
+
+        /* Illuminated Grimoire Glass Architecture */
+        .grimoire-card {
+            position: relative;
+            background: linear-gradient(155deg, rgba(11, 18, 26, 0.82) 0%, rgba(4, 7, 11, 0.94) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(229, 184, 105, 0.34);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 245, 214, 0.12);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .grimoire-card::before {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            border: 1px solid rgba(229, 184, 105, 0.14);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        .grimoire-card:hover {
+            border-color: rgba(229, 184, 105, 0.72);
+            box-shadow: 0 32px 90px rgba(229, 184, 105, 0.2), inset 0 1px 0 rgba(229, 184, 105, 0.32);
+        }
+
+        .mythic-gold-text {
+            background: linear-gradient(110deg, #F2EFE9 10%, #E5B869 42%, #FFF8DE 50%, #E5B869 58%, #F2EFE9 90%);
+            background-size: 220% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmerText 6s linear infinite;
+        }
+
+        @keyframes shimmerText {
+            to {
+                background-position: 220% center;
+            }
+        }
+
+        /* Story Cards Synchronized with Portal Depth */
+        .portal-chapter-card {
+            opacity: 0;
+            transform: translateY(20px) scale(0.96);
+            filter: blur(8px);
+            transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .portal-chapter-card.is-active {
+            opacity: 1;
+            transform: translateY(0px) scale(1);
+            filter: blur(0px);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-lantern/30 selection:text-lantern">
+
+    <!-- =========================================================================
+       1. CHROMATIC PIGMENT-BALLOON & WATERCOLOR SPLASH ENGINE CANVAS
+       How this brings your idea to life across all 5 Dream Chapters:
+       1. COLORLESS CHARCOAL ETCHING BASE:
+          Every dream world starts as a delicate, monochrome pen-and-ink / charcoal
+          sketch on dark parchment. Even in sketch form, the stars, waves, and
+          waterfalls move!
+       2. THROWABLE PIGMENT BALLOONS (ARC TRAJECTORY + ORGANIC SPLATTER):
+          Click anywhere (or drag to rapid-throw) to hurl a glowing pigment balloon
+          from the bottom of your screen in a 3D parabolic arc toward your target.
+          On impact, it bursts into an organic watercolor splash (with satellite
+          droplets & bleeding edges) that permanently reveals the full, vibrant,
+          living painted scenery underneath—or tints it with your chosen emotion
+          pigment!
+       ========================================================================= -->
+    <div class="fixed inset-0 z-0 overflow-hidden">
+        <canvas id="dreamPortalCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+    </div>
+
+    <!-- =========================================================================
+       2. TOP ASTROLABE HUD & PORTAL THRESHOLD SELECTOR
+       ========================================================================= -->
+    <header
+        class="fixed top-0 left-0 right-0 z-40 px-4 sm:px-8 py-3.5 border-b border-hairline bg-void/75 backdrop-blur-xl flex items-center justify-between">
+        <div class="flex items-center gap-3.5 cursor-pointer group" onclick="diveToPortal(0)">
+            <div
+                class="relative w-10 h-10 rounded-full border border-lantern/70 bg-lantern/10 flex items-center justify-center shadow-lantern group-hover:scale-105 transition-transform">
+                <svg viewBox="0 0 36 36" class="w-5 h-5 text-lantern">
+                    <path d="M18 4 C10 4 6 11 6 19 V31 H30 V19 C30 11 26 4 18 4 Z" fill="none" stroke="currentColor"
+                        stroke-width="1.5" />
+                    <circle cx="18" cy="17" r="4" fill="#E5B869" />
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="font-mythic tracking-wider text-base sm:text-lg text-cloud leading-none">
+                        The Dream Machine
+                    </span>
+                    <span
+                        class="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-widest bg-lantern/15 text-lantern border border-lantern/30">
+                        Chromatic Balloon Engine
+                    </span>
+                </div>
+                <div class="text-[10px] font-mono uppercase tracking-widest text-mist/80 mt-1 flex items-center gap-2">
+                    <span id="hudPortalLabel">CHAPTER I · THE IVY ARCHWAY SKETCH</span>
+                    <span class="text-lantern/50">·</span>
+                    <span id="hudPaintedMeter" class="text-lantern font-semibold">COLORED: 0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5 Dream Chapters Navigation -->
+        <nav class="hidden xl:flex items-center gap-1 bg-surface/90 p-1 rounded-full border border-hairline">
+            <button onclick="diveToPortal(0)"
+                class="portal-nav-btn px-3.5 py-1.5 rounded-full text-xs font-serif transition-all bg-lantern text-void font-semibold cursor-pointer"
+                data-portal="0">
+                I. The Ivy Archway
+            </button>
+            <button onclick="diveToPortal(1)"
+                class="portal-nav-btn px-3.5 py-1.5 rounded-full text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-portal="1">
+                II. Sea of 16 Stars
+            </button>
+            <button onclick="diveToPortal(2)"
+                class="portal-nav-btn px-3.5 py-1.5 rounded-full text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-portal="2">
+                III. Gallery of Frames
+            </button>
+            <button onclick="diveToPortal(3)"
+                class="portal-nav-btn px-3.5 py-1.5 rounded-full text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-portal="3">
+                IV. Kintsugi Shards
+            </button>
+            <button onclick="diveToPortal(4)"
+                class="portal-nav-btn px-3.5 py-1.5 rounded-full text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-portal="4">
+                V. The Sky Citadel
+            </button>
+        </nav>
+
+        <!-- Controls: Throw Shower, Wash Canvas, Audio & Oracle -->
+        <div class="flex items-center gap-2 sm:gap-2.5">
+            <button onclick="launchBalloonBarrage()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-lantern/50 bg-lantern/15 text-xs font-mono text-lantern hover:bg-lantern hover:text-void transition-all cursor-pointer"
+                title="Throw a volley of 6 color balloons across the dream">
+                <i data-lucide="palette" class="w-3.5 h-3.5"></i>
+                <span class="hidden md:inline">Color Volley (x6)</span>
+            </button>
+
+            <button onclick="clearCurrentWorldPaint()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-mono text-mist hover:text-dusk-rose hover:border-dusk-rose/50 transition-all cursor-pointer"
+                title="Wash away paint back to monochrome sketch">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                <span class="hidden md:inline">Reset Sketch</span>
+            </button>
+
+            <button id="audioToggleBtn" onclick="toggleDreamChimes()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-mono text-mist hover:text-lantern hover:border-lantern/50 transition-all cursor-pointer">
+                <i data-lucide="volume-x" class="w-3.5 h-3.5 text-lantern"></i>
+                <span class="hidden md:inline" id="audioToggleText">Sound FX</span>
+            </button>
+
+            <button onclick="openOracleModal()"
+                class="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft shadow-lantern transition-all cursor-pointer">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>Decode Colors</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- =========================================================================
+       3. BOTTOM PIGMENT BALLOON PALETTE DOCK (CHOOSE BALLOON COLOR BEFORE THROWING!)
+       ========================================================================= -->
+    <div
+        class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-auto flex flex-col items-center gap-2 max-w-[96vw]">
+        <div
+            class="px-4 py-2.5 rounded-2xl bg-void/90 border border-lantern/40 backdrop-blur-2xl shadow-lantern flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-1.5 pr-2 border-r border-hairline">
+                <span class="w-2 h-2 rounded-full bg-lantern animate-ping"></span>
+                <span class="text-[10px] font-mono uppercase tracking-wider text-mist">
+                    Select Balloon Pigment:
+                </span>
+            </div>
+
+            <!-- 1. True Memory Spectrum (Reveals exact native colors of the painting) -->
+            <button onclick="selectBalloonPigment('true', '#FCE1A6', 'True Memory Spectrum')"
+                class="pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-lantern bg-lantern/20 text-xs font-serif text-cloud transition-all cursor-pointer"
+                data-pigment="true">
+                <span
+                    class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-amber-300 via-cyan-300 to-emerald-300 shadow-sm"></span>
+                <span>True Painting</span>
+            </button>
+
+            <!-- 2. Lantern Gold (Wonder / Lucid Illumination) -->
+            <button onclick="selectBalloonPigment('gold', '#E5B869', 'Lantern Gold (Wonder)')"
+                class="pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-pigment="gold">
+                <span class="w-3.5 h-3.5 rounded-full" style="background:#E5B869;"></span>
+                <span>Lantern Gold</span>
+            </button>
+
+            <!-- 3. Astral Cyan (Subconscious Sea / Mystery) -->
+            <button onclick="selectBalloonPigment('cyan', '#43D8EE', 'Astral Cyan (Curiosity)')"
+                class="pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-pigment="cyan">
+                <span class="w-3.5 h-3.5 rounded-full" style="background:#43D8EE;"></span>
+                <span>Astral Cyan</span>
+            </button>
+
+            <!-- 4. Sylvan Emerald (Growth / Earth Sanctuary) -->
+            <button onclick="selectBalloonPigment('emerald', '#56C288', 'Sylvan Emerald (Serenity)')"
+                class="pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-pigment="emerald">
+                <span class="w-3.5 h-3.5 rounded-full" style="background:#56C288;"></span>
+                <span>Sylvan Emerald</span>
+            </button>
+
+            <!-- 5. Dusk Rose (Emotion /Relational Memory) -->
+            <button onclick="selectBalloonPigment('rose', '#E2748A', 'Dusk Rose (Deep Feeling)')"
+                class="pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-pigment="rose">
+                <span class="w-3.5 h-3.5 rounded-full" style="background:#E2748A;"></span>
+                <span>Dusk Rose</span>
+            </button>
+
+            <!-- 6. Nocturne Violet (Mythic / Surreal) -->
+            <button onclick="selectBalloonPigment('violet', '#9E7BFF', 'Oneiric Violet (Transcendence)')"
+                class="pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer"
+                data-pigment="violet">
+                <span class="w-3.5 h-3.5 rounded-full" style="background:#9E7BFF;"></span>
+                <span>Oneiric Violet</span>
+            </button>
+        </div>
+
+        <div
+            class="text-[11px] font-serif italic text-mist/90 bg-void/75 px-3.5 py-0.5 rounded-full border border-hairline">
+            Click anywhere on the colorless sketch to <strong class="text-lantern not-italic font-mono">THROW A COLOR
+                BALLOON</strong> · Hold &amp; drag to rapid-paint · Scroll to change chapters
+        </div>
+    </div>
+
+    <!-- =========================================================================
+       4. STORYBOOK CHAPTER CARDS (Left Side — Framing the Colorless Sketch)
+       ========================================================================= -->
+    <div class="fixed inset-y-0 left-0 z-20 pointer-events-none flex items-center px-4 sm:px-8">
+
+        <!-- CHAPTER 0: THE GOTHIC IVY ARCHWAY -->
+        <div id="portalCard0" class="portal-chapter-card is-active w-full max-w-sm">
+            <div class="grimoire-card rounded-3xl p-5 sm:p-6 space-y-3.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono uppercase tracking-widest text-lantern">
+                        Chapter I · The Uncolored Threshold
+                    </span>
+                    <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-lantern/15 text-lantern border border-lantern/30">
+                        Click to Splash
+                    </span>
+                </div>
+
+                <h1 class="font-display text-2xl sm:text-3xl font-light text-cloud leading-tight">
+                    You wake in <span class="italic text-mist">monochrome.</span><br />
+                    <span class="italic mythic-gold-text">Throw color to remember.</span>
+                </h1>
+
+                <p class="font-serif italic text-xs sm:text-sm text-mist leading-relaxed">
+                    &ldquo;When you first open your eyes, a dream is only a colorless charcoal outline. Pick a pigment
+                    balloon below and hurl it at the Gothic Ivy Archway, the Traveler&apos;s lantern, or the floating
+                    sky islands to bring them to life.&rdquo;
+                </p>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button onclick="launchBalloonBarrage()"
+                        class="px-3.5 py-2 rounded-xl border border-lantern/50 bg-lantern/15 text-lantern text-xs font-serif hover:bg-lantern hover:text-void transition-all cursor-pointer">
+                        Splash 6 Balloons
+                    </button>
+                    <button onclick="diveToPortal(1)"
+                        class="flex-1 py-2 px-3.5 rounded-xl bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft shadow-lantern transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <span>Next Dream Scene</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAPTER 1: THE SEA OF 16 STARS -->
+        <div id="portalCard1" class="portal-chapter-card w-full max-w-sm">
+            <div class="grimoire-card rounded-3xl p-5 sm:p-6 space-y-3.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono uppercase tracking-widest text-lantern">
+                        Chapter II · The Star-Crowned Sea
+                    </span>
+                    <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-lake/20 text-lake border border-lake/40">
+                        16-Star Ring
+                    </span>
+                </div>
+
+                <h2 class="font-display text-2xl sm:text-3xl font-light text-cloud leading-tight">
+                    Color the <span class="italic text-lantern">sixteen stars</span> &amp; the mirror tide.
+                </h2>
+
+                <p class="font-serif italic text-xs sm:text-sm text-mist leading-relaxed">
+                    &ldquo;Throw a <strong class="text-lantern">Lantern Gold</strong> balloon at the revolving 16-star
+                    halo overhead, then hurl <strong class="text-lake">Astral Cyan</strong> at the floating ocean
+                    doorway to awaken its reflection on the waves.&rdquo;
+                </p>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button onclick="diveToPortal(0)"
+                        class="px-3 py-2 rounded-xl border border-hairline text-xs font-serif text-mist hover:text-cloud cursor-pointer">
+                        ← Prev
+                    </button>
+                    <button onclick="launchBalloonBarrage()"
+                        class="px-3 py-2 rounded-xl border border-lantern/50 bg-lantern/15 text-lantern text-xs font-serif hover:bg-lantern hover:text-void cursor-pointer">
+                        Splash Sea
+                    </button>
+                    <button onclick="diveToPortal(2)"
+                        class="flex-1 py-2 px-3.5 rounded-xl bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft shadow-lantern transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <span>Next Scene</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAPTER 2: THE RIVER OF GILT FRAMES -->
+        <div id="portalCard2" class="portal-chapter-card w-full max-w-sm">
+            <div class="grimoire-card rounded-3xl p-5 sm:p-6 space-y-3.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono uppercase tracking-widest text-lantern">
+                        Chapter III · The Unpainted Gallery
+                    </span>
+                    <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-lantern/15 text-lantern border border-lantern/30">
+                        Living Frames
+                    </span>
+                </div>
+
+                <h2 class="font-display text-2xl sm:text-3xl font-light text-cloud leading-tight">
+                    Splash pigment into <span class="italic text-lantern">empty frames.</span>
+                </h2>
+
+                <p class="font-serif text-xs sm:text-sm text-mist leading-relaxed">
+                    Each floating picture frame in the stardust river is a blank etching until your color balloon hits
+                    it. Throw balloons at the <strong>Azure Tide Frame</strong>, the <strong>Torchlit Corridor</strong>,
+                    and the <strong>Chronos Pocketwatch</strong>!
+                </p>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button onclick="diveToPortal(1)"
+                        class="px-3 py-2 rounded-xl border border-hairline text-xs font-serif text-mist hover:text-cloud cursor-pointer">
+                        ← Prev
+                    </button>
+                    <button onclick="launchBalloonBarrage()"
+                        class="px-3 py-2 rounded-xl border border-lantern/50 bg-lantern/15 text-lantern text-xs font-serif hover:bg-lantern hover:text-void cursor-pointer">
+                        Paint Frames
+                    </button>
+                    <button onclick="diveToPortal(3)"
+                        class="flex-1 py-2 px-3.5 rounded-xl bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft shadow-lantern transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <span>Next Scene</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAPTER 3: THE SHATTERED KINTSUGI CASTLE -->
+        <div id="portalCard3" class="portal-chapter-card w-full max-w-sm">
+            <div class="grimoire-card rounded-3xl p-5 sm:p-6 space-y-3.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono uppercase tracking-widest text-lantern">
+                        Chapter IV · Kintsugi Shards
+                    </span>
+                    <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-lantern/20 text-lantern border border-lantern/40">
+                        Fragment Weave
+                    </span>
+                </div>
+
+                <h2 class="font-display text-2xl sm:text-3xl font-light text-cloud leading-tight">
+                    Every balloon splash <span class="italic text-lantern">heals a shard.</span>
+                </h2>
+
+                <p class="font-serif text-xs sm:text-sm text-mist leading-relaxed">
+                    In this chapter, throwing a color balloon at any shattered piece of the castle both <strong>fills it
+                        with watercolor</strong> and tightens the golden Kintsugi threads binding the dream together!
+                </p>
+
+                <div class="p-3 rounded-2xl bg-void/85 border border-hairline space-y-1.5">
+                    <div class="flex justify-between text-xs font-mono">
+                        <span class="text-mist">Kintsugi Gold Seam Tension</span>
+                        <span id="kintsugiWeavePct" class="text-lantern font-semibold">65% Healed</span>
+                    </div>
+                    <input id="kintsugiWeaveSlider" type="range" min="0" max="100" value="65"
+                        class="w-full accent-amber-400 cursor-pointer" oninput="setKintsugiWeaveAmount(this.value)" />
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="diveToPortal(2)"
+                        class="px-3 py-2 rounded-xl border border-hairline text-xs font-serif text-mist hover:text-cloud cursor-pointer">
+                        ← Prev
+                    </button>
+                    <button onclick="diveToPortal(4)"
+                        class="flex-1 py-2 px-3.5 rounded-xl bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft shadow-lantern transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <span>Final Scene</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAPTER 4: THE SKY CITADEL & TREEHOUSE BALCONY -->
+        <div id="portalCard4" class="portal-chapter-card w-full max-w-sm">
+            <div class="grimoire-card rounded-3xl p-5 sm:p-6 space-y-3.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono uppercase tracking-widest text-lantern">
+                        Chapter V · The Sky Citadel
+                    </span>
+                    <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-leaf/20 text-leaf border border-leaf/40">
+                        Sanctum
+                    </span>
+                </div>
+
+                <h2 class="font-display text-2xl sm:text-3xl font-light text-cloud leading-tight">
+                    A world colored by <span class="italic text-lantern">your own hand.</span>
+                </h2>
+
+                <p class="font-serif text-xs sm:text-sm text-mist leading-relaxed">
+                    Throw balloons at the hanging treehouse lantern, the turquoise waterfall arch, and the floating Sky
+                    Citadel. Then open the Philosophical Oracle to read what your chosen colors reveal about your
+                    psyche.
+                </p>
+
+                <button onclick="openOracleModal()"
+                    class="w-full py-3 rounded-xl bg-lantern text-void font-semibold text-xs hover:bg-lantern-soft shadow-lantern transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="wand-sparkles" class="w-4 h-4"></i>
+                    <span>Decode My Dream &amp; Color Palette</span>
+                </button>
+
+                <div class="flex items-center justify-between pt-1">
+                    <button onclick="diveToPortal(0)"
+                        class="text-xs font-mono text-mist hover:text-lantern cursor-pointer">
+                        ↺ Return to Chapter I
+                    </button>
+                    <button onclick="launchBalloonBarrage()"
+                        class="text-xs font-mono text-lantern hover:underline cursor-pointer">
+                        Grand Finale Volley
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =========================================================================
+       5. VIRTUAL SCROLL TRACK (850vh tall to drive continuous Recursive Portal Zoom)
+       ========================================================================= -->
+    <div id="portalScrollTrack" class="relative z-10 w-full h-[850vh] pointer-events-none"></div>
+
+    <!-- =========================================================================
+       6. PHILOSOPHICAL ORACLE & DREAM INSCRIPTION MODAL (GEMINI API)
+       ========================================================================= -->
+    <div id="oracleModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6 bg-void/85 backdrop-blur-2xl">
+        <div
+            class="grimoire-card w-full max-w-5xl rounded-3xl overflow-hidden border border-lantern/50 max-h-[92vh] flex flex-col">
+            <div class="px-6 py-4 border-b border-hairline flex items-center justify-between bg-void/70">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-full bg-lantern/20 border border-lantern flex items-center justify-center text-lantern">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-mythic text-lg text-cloud leading-none">
+                            The Oneiric Grimoire &amp; Philosophical Oracle
+                        </h3>
+                        <p class="text-[11px] font-mono text-sage mt-1">
+                            Inscribes your dream symbols directly into the Lantern Reveal layer &amp; generates 3
+                            philosophical lenses
+                        </p>
+                    </div>
+                </div>
+                <button onclick="closeOracleModal()"
+                    class="p-2 rounded-full border border-hairline text-mist hover:text-cloud hover:border-lantern transition-all cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-xs font-mono uppercase tracking-wider text-lantern block">
+                            1. Whisper Your Dream Recollection
+                        </label>
+                        <textarea id="oracleDreamInput" rows="4"
+                            class="w-full p-4 rounded-2xl bg-void/90 border border-hairline font-serif text-base text-cloud placeholder-sage focus:outline-none focus:border-lantern resize-none"
+                            placeholder="Tell us the fragments...">I stood before an ivy-covered Gothic archway with a lantern; inside the arch was a black mirror sea crowned by sixteen golden stars and a levitating castle stitched with molten gold.</textarea>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <span class="text-[11px] font-mono text-sage block">Or load an archetypal dream fragment:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="selectOraclePreset(0)"
+                                class="text-xs font-serif px-3 py-1 rounded-full bg-surface-raised border border-hairline text-mist hover:text-lantern cursor-pointer">
+                                The 16-Star Sea Door
+                            </button>
+                            <button onclick="selectOraclePreset(1)"
+                                class="text-xs font-serif px-3 py-1 rounded-full bg-surface-raised border border-hairline text-mist hover:text-lantern cursor-pointer">
+                                The Kintsugi Castle Map
+                            </button>
+                            <button onclick="selectOraclePreset(2)"
+                                class="text-xs font-serif px-3 py-1 rounded-full bg-surface-raised border border-hairline text-mist hover:text-lantern cursor-pointer">
+                                The Balcony &amp; Waterfall Arch
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="consultOracleBtn" onclick="consultDreamOracle()"
+                        class="w-full py-3.5 rounded-xl bg-lantern text-void font-semibold text-sm hover:bg-lantern-soft shadow-lantern transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="wand-sparkles" class="w-4 h-4"></i>
+                        <span>Inscribe Runes &amp; Consult Philosophical Oracle</span>
+                    </button>
+                </div>
+
+                <div class="lg:col-span-7 flex flex-col justify-between space-y-4">
+                    <div class="flex flex-wrap items-center gap-2 border-b border-hairline pb-3">
+                        <button onclick="switchOracleTab('jungian')"
+                            class="oracle-tab px-3.5 py-1.5 rounded-full text-xs font-mono bg-lantern text-void font-semibold cursor-pointer"
+                            data-tab="jungian">
+                            I. Jungian Archetype
+                        </button>
+                        <button onclick="switchOracleTab('existential')"
+                            class="oracle-tab px-3.5 py-1.5 rounded-full text-xs font-mono text-mist hover:text-cloud cursor-pointer"
+                            data-tab="existential">
+                            II. Poetics of Space (Bachelard)
+                        </button>
+                        <button onclick="switchOracleTab('kintsugi')"
+                            class="oracle-tab px-3.5 py-1.5 rounded-full text-xs font-mono text-mist hover:text-cloud cursor-pointer"
+                            data-tab="kintsugi">
+                            III. Kintsugi Synthesis
+                        </button>
+                    </div>
+
+                    <div
+                        class="p-5 rounded-2xl bg-void/80 border border-lantern/30 space-y-3 flex-1 flex flex-col justify-center">
+                        <div class="flex items-center justify-between">
+                            <span id="oracleLensHeading"
+                                class="text-xs font-mono uppercase tracking-widest text-lantern">
+                                JUNGIAN ARCHETYPE · THE LIMINAL THRESHOLD
+                            </span>
+                            <span id="oracleMotifTag"
+                                class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-lake/20 text-lake border border-lake/40">
+                                Rune Inscription Active
+                            </span>
+                        </div>
+                        <p id="oracleLensBody" class="font-serif text-base sm:text-lg text-cloud/95 leading-relaxed">
+                            Every doorway inside a dream is an invitation from the Self to cross from known
+                            ego-territory into the numinous unconscious. Because each portal contains the next world
+                            inside itself, your psyche is showing you that inner depth is infinite.
+                        </p>
+                        <div class="pt-2 border-t border-hairline/60 text-xs font-serif italic text-mist"
+                            id="oracleLensQuestion">
+                            Contemplation: &ldquo;Which threshold in your waking life are you standing before with
+                            lantern in hand?&rdquo;
+                        </div>
+                    </div>
+
+                    <div
+                        class="p-4 rounded-2xl bg-surface/90 border border-hairline flex items-center justify-between gap-3">
+                        <p id="oracleStageSummary" class="text-xs font-serif italic text-mist">
+                            Hidden dream runes updated inside the Lantern Reveal beam.
+                        </p>
+                        <button onclick="closeOracleModal()"
+                            class="px-4 py-2 rounded-xl bg-lantern/20 border border-lantern text-lantern text-xs font-mono hover:bg-lantern hover:text-void transition-all shrink-0 cursor-pointer">
+                            Explore With Lantern
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+       7. CHROMATIC PIGMENT-BALLOON & WATERCOLOR SPLASH RENDER ENGINE
+       ========================================================================= -->
+    <script>
+        lucide.createIcons();
+
+        // -------------------------------------------------------------------------
+        // A. STATE: 5 PERSISTENT WATERCOLOR SPLATTER BUFFERS + FLYING BALLOONS
+        // -------------------------------------------------------------------------
+        const state = {
+            targetPortalProgress: 0,
+            smoothPortalProgress: 0,
+            activePortalIndex: 0,
+            kintsugiWeave: 0.65,
+            musicBoxEnabled: false,
+            mouseX: window.innerWidth * 0.58,
+            mouseY: window.innerHeight * 0.46,
+            isDraggingThrow: false,
+            lastDragThrowTime: 0,
+            // Selected Balloon Pigment
+            selectedPigmentKey: 'true', // 'true' | 'gold' | 'cyan' | 'emerald' | 'rose' | 'violet'
+            selectedPigmentHex: '#FCE1A6',
+            selectedPigmentLabel: 'True Memory Spectrum',
+            // Active 3D Flying Balloons in mid-air
+            flyingBalloons: [],
+            // Burst droplet particles & expanding shockwave rings
+            dropletParticles: [],
+            ripples: [],
+            stringVibrations: [0, 0, 0, 0, 0, 0, 0],
+            // Track how many splashes have landed on each of the 5 worlds
+            worldSplashCounts: [0, 0, 0, 0, 0],
+            // Secret runes revealed inside painted zones
+            runes: [
+                { rx: 0.42, ry: 0.25, glyph: "☉ CHROMATIC AWAKENING", whisper: "“Color is the memory the shadow tried to keep.”" },
+                { rx: 0.68, ry: 0.30, glyph: "☽ TEMENOS GATE", whisper: "“Every splash restores a piece of the forgotten night.”" },
+                { rx: 0.48, ry: 0.68, glyph: "⚱ MNEMOSYNE TIDE", whisper: "“Sixteen stars ignite when touched by pigment.”" },
+                { rx: 0.74, ry: 0.64, glyph: "✧ KAIROS TIMELESS", whisper: "“Where the balloon bursts, the dream begins to breathe.”" }
+            ],
+            oracleLenses: {
+                jungian: {
+                    heading: "JUNGIAN ARCHETYPE · CHROMATIC ALCHEMY",
+                    motif: "Albedo to Rubedo (Color Awakening)",
+                    body: "In Jungian alchemy, the dream begins in Nigredo/Albedo—a monochrome charcoal outline where emotions are latent. By actively hurling color onto the threshold, your conscious ego participates in individuating the unconscious image.",
+                    question: "Contemplation: “Which part of the colorless sketch did you feel drawn to color first?”"
+                },
+                existential: {
+                    heading: "POETICS OF SPACE · GASTON BACHELARD",
+                    motif: "Motif: The Hand That Colors Memory",
+                    body: "A memory is never passive; we reconstruct it in the act of reaching toward it. Each pigment splash marks the exact boundary between what you witnessed in sleep and what you choose to carry into waking life.",
+                    question: "Contemplation: “If you could throw one color into tomorrow’s waking day, which pigment would it be?”"
+                },
+                kintsugi: {
+                    heading: "KINTSUGI SYNTHESIS · WATERCOLOR & GOLD",
+                    motif: "Motif: Blooming Across the Seam",
+                    body: "Like watercolor bleeding across raw parchment, dream emotion refuses hard walls. Your splashes bridge the shattered shards of the castle before ordinary logic even knows how they connect.",
+                    question: "Contemplation: “Where do two different colors meet and blend inside your dream?”"
+                }
+            }
+        };
+
+        const PORTAL_TITLES = [
+            "CHAPTER I · THE IVY ARCHWAY SKETCH",
+            "CHAPTER II · THE 16-STAR MIRROR OCEAN",
+            "CHAPTER III · THE GALLERY OF EMPTY FRAMES",
+            "CHAPTER IV · THE SHATTERED KINTSUGI CASTLE",
+            "CHAPTER V · THE SKY CITADEL & BALCONY"
+        ];
+
+        // -------------------------------------------------------------------------
+        // B. TONE.JS WATERCOLOR BALLOON POP &HARP SYNTHESIZER
+        // -------------------------------------------------------------------------
+        let musicBoxSynth = null;
+        async function toggleDreamChimes() {
+            await Tone.start();
+            state.musicBoxEnabled = !state.musicBoxEnabled;
+            const btn = document.getElementById('audioToggleBtn');
+            const txt = document.getElementById('audioToggleText');
+            if (state.musicBoxEnabled) {
+                if (!musicBoxSynth) {
+                    const reverb = new Tone.Reverb({ decay: 5.5, wet: 0.68 }).toDestination();
+                    musicBoxSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "triangle" },
+                        envelope: { attack: 0.01, decay: 1.2, sustain: 0.08, release: 2.4 }
+                    }).connect(reverb);
+                    musicBoxSynth.volume.value = -13;
+                }
+                txt.textContent = "Sound: ON";
+                btn.classList.add('border-lantern', 'bg-lantern/15');
+                playPortalChord(state.activePortalIndex);
+            } else {
+                txt.textContent = "Sound FX";
+                btn.classList.remove('border-lantern', 'bg-lantern/15');
+            }
+        }
+
+        function playPortalChord(portalIdx) {
+            if (!state.musicBoxEnabled || !musicBoxSynth) return;
+            const chords = [
+                ["E4", "B4", "F#5", "G#5"],
+                ["C#4", "G#4", "D#5", "E5"],
+                ["A3", "E4", "B4", "C#5"],
+                ["F#3", "C#4", "G#4", "A4"],
+                ["B3", "F#4", "C#5", "D#5"]
+            ];
+            musicBoxSynth.triggerAttackRelease(chords[portalIdx % chords.length], "2n");
+        }
+
+        function playBalloonBurstSound() {
+            if (!state.musicBoxEnabled || !musicBoxSynth) return;
+            const notes = ["E4", "F#4", "G#4", "B4", "C#5", "D#5", "E5", "G#5", "B5"];
+            const n1 = notes[Math.floor(Math.random() * notes.length)];
+            const n2 = notes[Math.floor(Math.random() * notes.length)];
+            musicBoxSynth.triggerAttackRelease([n1, n2], "8n");
+        }
+
+        // -------------------------------------------------------------------------
+        // C. MULTI-LAYER CANVASES & 5 PERSISTENT SPLATTER MASK CANVASES
+        // -------------------------------------------------------------------------
+        const canvas = document.getElementById('dreamPortalCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Offscreen Full-Color Render Buffer + Composite Buffer
+        const colorBuffer = document.createElement('canvas');
+        const colorCtx = colorBuffer.getContext('2d');
+        const tintOverlayBuffer = document.createElement('canvas');
+        const tintOverlayCtx = tintOverlayBuffer.getContext('2d');
+
+        // 5 Persistent Splatter Mask Canvases (one for each Dream Chapter!)
+        const worldMaskCanvases = Array.from({ length: 5 }, () => {
+            const c = document.createElement('canvas');
+            return c;
+        });
+        const worldTintCanvases = Array.from({ length: 5 }, () => {
+            const c = document.createElement('canvas');
+            return c;
+        });
+
+        let W = window.innerWidth;
+        let H = window.innerHeight;
+
+        function resizeCanvases() {
+            W = window.innerWidth;
+            H = window.innerHeight;
+            canvas.width = W;
+            canvas.height = H;
+            colorBuffer.width = W;
+            colorBuffer.height = H;
+            tintOverlayBuffer.width = W;
+            tintOverlayBuffer.height = H;
+
+            worldMaskCanvases.forEach((mc, i) => {
+                if (mc.width === 0) {
+                    mc.width = W;
+                    mc.height = H;
+                    worldTintCanvases[i].width = W;
+                    worldTintCanvases[i].height = H;
+                } else if (mc.width !== W || mc.height !== H) {
+                    const temp = document.createElement('canvas');
+                    temp.width = mc.width;
+                    temp.height = mc.height;
+                    temp.getContext('2d').drawImage(mc, 0, 0);
+                    mc.width = W;
+                    mc.height = H;
+                    mc.getContext('2d').drawImage(temp, 0, 0, W, H);
+
+                    const tempT = document.createElement('canvas');
+                    tempT.width = worldTintCanvases[i].width;
+                    tempT.height = worldTintCanvases[i].height;
+                    tempT.getContext('2d').drawImage(worldTintCanvases[i], 0, 0);
+                    worldTintCanvases[i].width = W;
+                    worldTintCanvases[i].height = H;
+                    worldTintCanvases[i].getContext('2d').drawImage(tempT, 0, 0, W, H);
+                }
+            });
+        }
+        resizeCanvases();
+        window.addEventListener('resize', resizeCanvases);
+
+        // -------------------------------------------------------------------------
+        // D. THROWING A 3D ARCED COLOR BALLOON & STAMPING WATERCOLOR SPLATTERS
+        // -------------------------------------------------------------------------
+        function selectBalloonPigment(key, hex, label) {
+            state.selectedPigmentKey = key;
+            state.selectedPigmentHex = hex;
+            state.selectedPigmentLabel = label;
+
+            document.querySelectorAll('.pigment-swatch-btn').forEach((btn) => {
+                if (btn.getAttribute('data-pigment') === key) {
+                    btn.className = "pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-lantern bg-lantern/20 text-xs font-serif text-cloud transition-all cursor-pointer scale-105";
+                } else {
+                    btn.className = "pigment-swatch-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-hairline bg-surface/80 text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer";
+                }
+            });
+        }
+
+        // Launches a 3D parabolic balloon from the bottom-center toward (targetX, targetY)
+        function throwColorBalloon(targetX, targetY, customPigmentKey = null, customHex = null) {
+            const pKey = customPigmentKey || state.selectedPigmentKey;
+            const pHex = customHex || state.selectedPigmentHex;
+
+            // In "True Memory Spectrum" mode, pick a vibrant preview hue based on screen region for the balloon shell
+            const balloonShellColor = pKey === 'true'
+                ? ['#E5B869', '#43D8EE', '#56C288', '#E2748A', '#9E7BFF'][Math.floor(Math.random() * 5)]
+                : pHex;
+
+            const startX = W * 0.5 + (Math.random() - 0.5) * 140;
+            const startY = H + 30;
+            const dist = Math.hypot(targetX - startX, targetY - startY);
+            const flightDuration = Math.max(0.28, Math.min(0.56, dist / 1450));
+
+            state.flyingBalloons.push({
+                startX,
+                startY,
+                targetX,
+                targetY,
+                arcHeight: 110 + dist * 0.16,
+                elapsed: 0,
+                duration: flightDuration,
+                pigmentKey: pKey,
+                shellColor: balloonShellColor,
+                splashRadius: 95 + Math.random() * 48, // ~3-4 centimeters of rich watercolor splash
+                worldIdx: state.activePortalIndex,
+                wobblePhase: Math.random() * Math.PI * 2
+            });
+        }
+
+        // Permanently stamps an organic watercolor splatter onto the current world's mask canvas
+        function stampWatercolorSplatter(worldIdx, x, y, radius, pigmentKey, shellColor) {
+            const mCtx = worldMaskCanvases[worldIdx].getContext('2d');
+            const tCtx = worldTintCanvases[worldIdx].getContext('2d');
+
+            // 1. Stamp organic multi-lobed watercolor blot onto the reveal mask
+            mCtx.save();
+            mCtx.translate(x, y);
+
+            // Soft bleeding outer watercolor halo
+            const outerGrad = mCtx.createRadialGradient(0, 0, radius * 0.25, 0, 0, radius * 1.38);
+            outerGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            outerGrad.addColorStop(0.68, 'rgba(255, 255, 255, 0.92)');
+            outerGrad.addColorStop(0.9, 'rgba(255, 255, 255, 0.45)');
+            outerGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            mCtx.fillStyle = outerGrad;
+
+            mCtx.beginPath();
+            const lobes = 18;
+            for (let i = 0; i <= lobes; i++) {
+                const ang = (i / lobes) * Math.PI * 2;
+                const rVar = radius * (0.82 + 0.36 * Math.sin(i * 3.7 + x) + 0.22 * Math.cos(i * 5.3 + y));
+                const px = Math.cos(ang) * rVar;
+                const py = Math.sin(ang) * rVar;
+                if (i === 0) mCtx.moveTo(px, py);
+                else mCtx.lineTo(px, py);
+            }
+            mCtx.closePath();
+            mCtx.fill();
+
+            // 2. Satellite paint droplets around the main impact
+            for (let d = 0; d < 16; d++) {
+                const dAng = Math.random() * Math.PI * 2;
+                const dDist = radius * (0.75 + Math.random() * 0.85);
+                const dRad = 4 + Math.random() * 18;
+                const dx = Math.cos(dAng) * dDist;
+                const dy = Math.sin(dAng) * dDist;
+
+                const dropGrad = mCtx.createRadialGradient(dx, dy, dRad * 0.2, dx, dy, dRad);
+                dropGrad.addColorStop(0, 'rgba(255,255,255,0.95)');
+                dropGrad.addColorStop(1, 'rgba(255,255,255,0)');
+                mCtx.fillStyle = dropGrad;
+                mCtx.beginPath();
+                mCtx.arc(dx, dy, dRad, 0, Math.PI * 2);
+                mCtx.fill();
+            }
+            mCtx.restore();
+
+            // 3. If user picked a specific custom pigment color (Gold, Cyan, Emerald, Rose, Violet),
+            //    stamp a luminous watercolor glaze onto the world's Tint Layer as well!
+            if (pigmentKey !== 'true') {
+                tCtx.save();
+                tCtx.translate(x, y);
+                const tintGrad = tCtx.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius * 1.25);
+                tintGrad.addColorStop(0, hexToRgba(shellColor, 0.52));
+                tintGrad.addColorStop(0.7, hexToRgba(shellColor, 0.28));
+                tintGrad.addColorStop(1, hexToRgba(shellColor, 0));
+                tCtx.fillStyle = tintGrad;
+                tCtx.beginPath();
+                tCtx.arc(0, 0, radius * 1.25, 0, Math.PI * 2);
+                tCtx.fill();
+                tCtx.restore();
+            }
+
+            // 4. Spawn flying live burst droplets & shockwave ring on the main canvas
+            state.ripples.push({
+                x,
+                y,
+                r: 10,
+                maxR: radius * 1.45,
+                alpha: 1.0,
+                color: shellColor
+            });
+
+            for (let p = 0; p < 28; p++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 2.2 + Math.random() * 8.5;
+                state.dropletParticles.push({
+                    x,
+                    y,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd - 1.8,
+                    r: 2.5 + Math.random() * 5.5,
+                    alpha: 1.0,
+                    color: shellColor
+                });
+            }
+
+            // 5. Special Chapter Interactions on Balloon Impact:
+            // In Chapter IV (Kintsugi Shards), each balloon splash heals the shards closer together!
+            if (worldIdx === 3) {
+                const nextWeave = Math.min(1.0, state.kintsugiWeave + 0.08);
+                setKintsugiWeaveAmount(Math.round(nextWeave * 100));
+            }
+
+            state.worldSplashCounts[worldIdx] = Math.min(100, state.worldSplashCounts[worldIdx] + 9);
+            updateHudPaintedPercentage();
+            playBalloonBurstSound();
+        }
+
+        function hexToRgba(hex, alpha) {
+            const clean = hex.replace('#', '');
+            const bigint = parseInt(clean, 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function updateHudPaintedPercentage() {
+            const pct = Math.min(100, state.worldSplashCounts[state.activePortalIndex]);
+            document.getElementById('hudPaintedMeter').textContent = `COLORED: ${pct}%`;
+        }
+
+        // Launches a celebratory volley of 6 color balloons across the screen
+        function launchBalloonBarrage() {
+            const palette = [
+                { key: 'true', hex: '#FCE1A6' },
+                { key: 'gold', hex: '#E5B869' },
+                { key: 'cyan', hex: '#43D8EE' },
+                { key: 'emerald', hex: '#56C288' },
+                { key: 'rose', hex: '#E2748A' },
+                { key: 'violet', hex: '#9E7BFF' }
+            ];
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    const tx = W * (0.28 + Math.random() * 0.58);
+                    const ty = H * (0.20 + Math.random() * 0.60);
+                    const p = palette[i % palette.length];
+                    throwColorBalloon(tx, ty, p.key, p.hex);
+                }, i * 110);
+            }
+        }
+
+        function clearCurrentWorldPaint() {
+            const idx = state.activePortalIndex;
+            const mCtx = worldMaskCanvases[idx].getContext('2d');
+            const tCtx = worldTintCanvases[idx].getContext('2d');
+            mCtx.clearRect(0, 0, W, H);
+            tCtx.clearRect(0, 0, W, H);
+            state.worldSplashCounts[idx] = 0;
+            updateHudPaintedPercentage();
+        }
+
+        // -------------------------------------------------------------------------
+        // E. THE 5 HAND-ILLUSTRATED ANIMATED WORLD DIORAMAS
+        //    When isLitPass === false: Renders as a Colorless Charcoal & Silverpoint
+        //    Sketch on dark parchment so the user can color it with balloons!
+        //    When isLitPass === true: Renders in Full Vibrant Living Watercolor!
+        // -------------------------------------------------------------------------
+
+        // WORLD 0: THE GOTHIC IVY ARCHWAY, CLOAKED TRAVELER & FLOATING ISLANDS (Image 1)
+        function drawWorld0_IvyArchway(g, time, isLitPass) {
+            // Sky background: Monochrome Parchment Charcoal vs. Vibrant Emerald-Azure Dream Sky
+            const skyGrad = g.createLinearGradient(0, -500, 0, 500);
+            skyGrad.addColorStop(0, isLitPass ? '#0C2338' : '#0B0E12');
+            skyGrad.addColorStop(0.55, isLitPass ? '#1B4B52' : '#12161C');
+            skyGrad.addColorStop(1, isLitPass ? '#112E28' : '#090C10');
+            g.fillStyle = skyGrad;
+            g.fillRect(-950, -550, 1900, 1100);
+
+            // Cross-hatched charcoal sketch lines when colorless
+            if (!isLitPass) {
+                drawCharcoalSketchHatching(g, time);
+            }
+
+            // Central Arched Portal Opening showing the Sun-Crowned Floating Sky Islands (from Image 1!)
+            g.save();
+            definePortalAperturePath(g);
+            g.clip();
+
+            const innerSky = g.createLinearGradient(0, -320, 0, 320);
+            innerSky.addColorStop(0, isLitPass ? '#1560BD' : '#151A22');
+            innerSky.addColorStop(0.6, isLitPass ? '#46A8E8' : '#1E242E');
+            innerSky.addColorStop(1, isLitPass ? '#246B56' : '#12171D');
+            g.fillStyle = innerSky;
+            g.fillRect(-300, -350, 600, 700);
+
+            // Blazing Sun & Cloud Halo Ring inside the Archway
+            const sunY = -135 + Math.sin(time * 1.4) * 6;
+            const sunGlow = g.createRadialGradient(0, sunY, 4, 0, sunY, isLitPass ? 120 : 55);
+            sunGlow.addColorStop(0, isLitPass ? '#FFFDF2' : '#D0D5DD');
+            sunGlow.addColorStop(0.35, isLitPass ? 'rgba(255, 210, 95, 0.88)' : 'rgba(160, 170, 185, 0.25)');
+            sunGlow.addColorStop(1, 'rgba(0,0,0,0)');
+            g.fillStyle = sunGlow;
+            g.beginPath();
+            g.arc(0, sunY, isLitPass ? 120 : 55, 0, Math.PI * 2);
+            g.fill();
+
+            // Cloud Ring around the Sun
+            g.strokeStyle = isLitPass ? 'rgba(255, 255, 255, 0.85)' : 'rgba(180, 190, 205, 0.38)';
+            g.lineWidth = 6;
+            g.beginPath();
+            g.ellipse(0, sunY, 135, 26, 0, 0, Math.PI * 2);
+            g.stroke();
+
+            // Winding Floating Cobblestone Path leading into the sky
+            g.fillStyle = isLitPass ? '#4FA368' : '#1C222A';
+            g.strokeStyle = isLitPass ? '#E5B869' : 'rgba(200, 210, 220, 0.45)';
+            g.lineWidth = 2;
+            g.beginPath();
+            g.moveTo(-55, 280);
+            g.quadraticCurveTo(65, 140, -15, 45);
+            g.quadraticCurveTo(-55, -20, 35, -75);
+            g.lineTo(75, -75);
+            g.quadraticCurveTo(-10, -15, 45, 50);
+            g.quadraticCurveTo(125, 145, 45, 280);
+            g.closePath();
+            g.fill();
+            g.stroke();
+            g.restore();
+
+            // Distant Mountain Silhouettes & Valley Mist outside the arch
+            for (let m = 0; m < 3; m++) {
+                g.fillStyle = isLitPass
+                    ? `rgba(24, 58, 52, ${0.48 + m * 0.16})`
+                    : `rgba(18, 22, 28, ${0.45 + m * 0.15})`;
+                g.strokeStyle = isLitPass ? 'rgba(144, 186, 158, 0.25)' : 'rgba(190, 200, 215, 0.28)';
+                g.lineWidth = 1.2;
+                g.beginPath();
+                g.moveTo(-950, 500);
+                for (let x = -950; x <= 950; x += 60) {
+                    const y = 95 + m * 65 + Math.sin(x * 0.006 + m * 2.1) * 90;
+                    g.lineTo(x, y);
+                }
+                g.lineTo(950, 500);
+                g.closePath();
+                g.fill();
+                g.stroke();
+            }
+
+            // Carved Gothic Stone Archway Pillars & Ivy Vines
+            g.fillStyle = isLitPass ? '#243C38' : '#141920';
+            g.strokeStyle = isLitPass ? '#E5B869' : 'rgba(210, 218, 228, 0.55)';
+            g.lineWidth = isLitPass ? 2.6 : 1.5;
+
+            [-310, 210].forEach((bx) => {
+                g.fillRect(bx, -360, 100, 640);
+                g.strokeRect(bx, -360, 100, 640);
+                // Gothic Spire Pinnacle
+                g.beginPath();
+                g.moveTo(bx - 12, -360);
+                g.lineTo(bx + 50, -475);
+                g.lineTo(bx + 112, -360);
+                g.closePath();
+                g.fill();
+                g.stroke();
+
+                // Creeping Ivy Leaves
+                for (let v = 0; v < 15; v++) {
+                    const vy = -310 + v * 40;
+                    const vx = bx + 50 + Math.sin(v * 1.3 + time * 1.5) * 38;
+                    g.fillStyle = isLitPass ? '#498A56' : '#1E242D';
+                    g.beginPath();
+                    g.ellipse(vx, vy, 15, 8, Math.sin(time + v) * 0.5, 0, Math.PI * 2);
+                    g.fill();
+                    g.stroke();
+                }
+            });
+
+            // Archway Crown Ring
+            definePortalAperturePath(g);
+            g.strokeStyle = isLitPass ? '#FCE1A6' : 'rgba(215, 222, 232, 0.65)';
+            g.lineWidth = 5;
+            g.stroke();
+
+            // Cloaked Traveler Silhouette with Staff & Swinging Lantern
+            const travX = -70;
+            const travY = 230;
+            g.fillStyle = isLitPass ? '#18282C' : '#0E1217';
+            g.strokeStyle = isLitPass ? '#FCE1A6' : 'rgba(220, 226, 235, 0.6)';
+            g.lineWidth = 1.8;
+            g.beginPath();
+            g.moveTo(travX, travY - 95);
+            g.quadraticCurveTo(travX + 32, travY - 40, travX + 26, travY + 35);
+            g.lineTo(travX - 28, travY + 35);
+            g.quadraticCurveTo(travX - 30, travY - 40, travX, travY - 95);
+            g.fill();
+            g.stroke();
+
+            // Traveler's Staff & Lantern
+            const swing = Math.sin(time * 3.0) * 6;
+            const lx = travX + 46 + swing;
+            const ly = travY - 50;
+            const lGlow = g.createRadialGradient(lx, ly, 2, lx, ly, isLitPass ? 95 : 28);
+            lGlow.addColorStop(0, isLitPass ? '#FFFDF0' : '#E2E8F0');
+            lGlow.addColorStop(0.35, isLitPass ? 'rgba(229, 184, 105, 0.9)' : 'rgba(180, 190, 205, 0.35)');
+            lGlow.addColorStop(1, 'rgba(0,0,0,0)');
+            g.fillStyle = lGlow;
+            g.beginPath();
+            g.arc(lx, ly, isLitPass ? 95 : 28, 0, Math.PI * 2);
+            g.fill();
+        }
+
+        // WORLD 1: THE SEA OF 16 STARS, CRESCENT MOON & FLOATING DOORS (Image 2)
+        function drawWorld1_SeaOfStars(g, time, isLitPass) {
+            const sky = g.createLinearGradient(0, -500, 0, 90);
+            sky.addColorStop(0, isLitPass ? '#061B2E' : '#0A0D12');
+            sky.addColorStop(1, isLitPass ? '#164E63' : '#131820');
+            g.fillStyle = sky;
+            g.fillRect(-950, -550, 1900, 640);
+
+            if (!isLitPass) drawCharcoalSketchHatching(g, time);
+
+            // The 16-Star Revolving Celestial Crown & Crescent Moon
+            g.save();
+            g.translate(0, -210);
+            g.fillStyle = isLitPass ? '#FFF6D6' : '#CBD5E1';
+            g.beginPath();
+            g.arc(0, 0, 28, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = isLitPass ? '#0B2D42' : '#0E1319';
+            g.beginPath();
+            g.arc(10, -6, 24, 0, Math.PI * 2);
+            g.fill();
+
+            g.strokeStyle = isLitPass ? 'rgba(229, 184, 105, 0.7)' : 'rgba(200, 210, 222, 0.42)';
+            g.lineWidth = 1.5;
+            g.beginPath();
+            g.ellipse(0, 0, 310, 82, 0, 0, Math.PI * 2);
+            g.stroke();
+
+            for (let s = 0; s < 16; s++) {
+                const ang = (s / 16) * Math.PI * 2 + time * 0.24;
+                const sx = Math.cos(ang) * 310;
+                const sy = Math.sin(ang) * 82;
+                const starScale = 0.8 + 0.35 * Math.sin(time * 2.5 + s);
+                drawFivePointStar(
+                    g, sx, sy, 12 * starScale, 5 * starScale,
+                    isLitPass ? '#FCE1A6' : '#94A3B8'
+                );
+            }
+            g.restore();
+
+            // Central Glowing Cyan Portal Doorway above the Horizon
+            const doorW = 130;
+            const doorH = 195;
+            const doorGlow = g.createRadialGradient(0, -25, 10, 0, -25, isLitPass ? 220 : 90);
+            doorGlow.addColorStop(0, isLitPass ? 'rgba(115, 245, 255, 0.95)' : 'rgba(200, 212, 225, 0.45)');
+            doorGlow.addColorStop(0.5, isLitPass ? 'rgba(56, 189, 248, 0.45)' : 'rgba(148, 163, 184, 0.15)');
+            doorGlow.addColorStop(1, 'rgba(0,0,0,0)');
+            g.fillStyle = doorGlow;
+            g.beginPath();
+            g.arc(0, -25, isLitPass ? 220 : 90, 0, Math.PI * 2);
+            g.fill();
+
+            g.fillStyle = isLitPass ? '#67E8F9' : '#334155';
+            g.fillRect(-doorW / 2, -125, doorW, doorH);
+            g.strokeStyle = isLitPass ? '#E5B869' : '#CBD5E1';
+            g.lineWidth = 5;
+            g.strokeRect(-doorW / 2, -125, doorW, doorH);
+
+            // Surrounding Floating Frames in the Sky
+            const floatingFrames = [
+                { x: -330, y: -35, w: 72, h: 100, rot: -0.18 },
+                { x: -205, y: -95, w: 58, h: 82, rot: 0.12 },
+                { x: 215, y: -80, w: 66, h: 92, rot: -0.14 },
+                { x: 345, y: -20, w: 78, h: 108, rot: 0.22 }
+            ];
+            floatingFrames.forEach((f, idx) => {
+                g.save();
+                g.translate(f.x, f.y + Math.sin(time * 1.5 + idx) * 11);
+                g.rotate(f.rot);
+                g.strokeStyle = isLitPass ? '#E5B869' : 'rgba(203, 213, 225, 0.55)';
+                g.lineWidth = 3;
+                g.strokeRect(-f.w / 2, -f.h / 2, f.w, f.h);
+                g.fillStyle = isLitPass ? 'rgba(56, 189, 248, 0.34)' : 'rgba(51, 65, 85, 0.25)';
+                g.fillRect(-f.w / 2 + 4, -f.h / 2 + 4, f.w - 8, f.h - 8);
+                g.restore();
+            });
+
+            // Mirror Ocean with Animated Wave Shimmer
+            const seaGrad = g.createLinearGradient(0, 90, 0, 550);
+            seaGrad.addColorStop(0, isLitPass ? '#0E3A4C' : '#0B0F15');
+            seaGrad.addColorStop(1, isLitPass ? '#05151E' : '#06080C');
+            g.fillStyle = seaGrad;
+            g.fillRect(-950, 90, 1900, 460);
+
+            for (let r = 0; r < 28; r++) {
+                const ry = 100 + r * 14;
+                const rw = (110 + r * 4.5) + Math.sin(time * 3.2 + r * 0.7) * 20;
+                const rx = Math.cos(time * 2.0 + r * 0.5) * 8;
+                g.fillStyle = isLitPass
+                    ? `rgba(103, 232, 249, ${0.48 - r * 0.014})`
+                    : `rgba(180, 195, 210, ${0.22 - r * 0.006})`;
+                g.fillRect(rx - rw / 2, ry, rw, 4);
+            }
+
+            // Levitating Silhouette & Water Reflection
+            const dreamerY = 42 + Math.sin(time * 2.2) * 8;
+            g.fillStyle = isLitPass ? '#FEF08A' : '#E2E8F0';
+            g.beginPath();
+            g.arc(-48, dreamerY - 18, 6, 0, Math.PI * 2);
+            g.moveTo(-48, dreamerY - 12);
+            g.lineTo(-36, dreamerY + 14);
+            g.lineTo(-60, dreamerY + 14);
+            g.closePath();
+            g.fill();
+        }
+
+        // WORLD 2: THE DIAGONAL RIVER OF STARDUST & GILT PICTURE FRAMES (Image 4)
+        function drawWorld2_GalleryOfFrames(g, time, isLitPass) {
+            g.fillStyle = isLitPass ? '#08151C' : '#090C10';
+            g.fillRect(-950, -550, 1900, 1100);
+
+            if (!isLitPass) drawCharcoalSketchHatching(g, time);
+
+            // Diagonal River of Golden Stardust
+            g.save();
+            g.rotate(-0.32);
+            const riverGrad = g.createLinearGradient(0, -150, 0, 150);
+            riverGrad.addColorStop(0, 'rgba(0,0,0,0)');
+            riverGrad.addColorStop(0.5, isLitPass ? 'rgba(229, 184, 105, 0.42)' : 'rgba(180, 190, 205, 0.14)');
+            riverGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            g.fillStyle = riverGrad;
+            g.fillRect(-1100, -150, 2200, 300);
+
+            for (let d = 0; d < 95; d++) {
+                const dx = ((d * 47 + time * 48) % 1800) - 900;
+                const dy = Math.sin(d * 2.3 + time) * 105;
+                g.fillStyle = isLitPass ? '#FCE1A6' : 'rgba(210, 218, 228, 0.42)';
+                g.beginPath();
+                g.arc(dx, dy, 1.8 + (d % 3), 0, Math.PI * 2);
+                g.fill();
+            }
+            g.restore();
+
+            // 1. Left Frame: The Azure Ocean Wave Painting
+            g.save();
+            g.translate(-290, -70 + Math.sin(time * 1.5) * 10);
+            g.rotate(-0.1);
+            g.fillStyle = isLitPass ? '#0284C7' : '#141A22';
+            g.fillRect(-85, -105, 170, 210);
+            for (let w = 0; w < 4; w++) {
+                g.fillStyle = isLitPass ? `rgba(186, 230, 253, ${0.42 + w * 0.15})` : 'rgba(180,195,210,0.22)';
+                g.beginPath();
+                const wy = -20 + w * 28 + Math.sin(time * 2.6 + w) * 7;
+                g.moveTo(-80, wy);
+                g.quadraticCurveTo(0, wy - 20, 80, wy);
+                g.lineTo(80, 100);
+                g.lineTo(-80, 100);
+                g.closePath();
+                g.fill();
+            }
+            g.strokeStyle = isLitPass ? '#E5B869' : '#CBD5E1';
+            g.lineWidth = 8;
+            g.strokeRect(-85, -105, 170, 210);
+            g.restore();
+
+            // 2. Center Frame: The Torchlit Stone Corridor
+            g.save();
+            g.translate(0, 10 + Math.sin(time * 1.2) * 8);
+            g.fillStyle = isLitPass ? '#451A03' : '#14181F';
+            g.fillRect(-105, -135, 210, 270);
+            const torchGlow = g.createRadialGradient(0, -15, 6, 0, -15, isLitPass ? 120 : 50);
+            torchGlow.addColorStop(0, isLitPass ? '#FEF08A' : '#CBD5E1');
+            torchGlow.addColorStop(0.5, isLitPass ? 'rgba(245, 158, 11, 0.65)' : 'rgba(148, 163, 184, 0.25)');
+            torchGlow.addColorStop(1, 'rgba(0,0,0,0)');
+            g.fillStyle = torchGlow;
+            g.fillRect(-100, -130, 200, 260);
+            g.strokeStyle = isLitPass ? '#FCE1A6' : '#CBD5E1';
+            g.lineWidth = 9;
+            g.strokeRect(-105, -135, 210, 270);
+            g.restore();
+
+            // 3. Right Frame: The Ticking Chronos Pocketwatch
+            g.save();
+            g.translate(295, 65 + Math.cos(time * 1.4) * 10);
+            g.rotate(0.12);
+            g.fillStyle = isLitPass ? '#172554' : '#12171E';
+            g.fillRect(-82, -82, 164, 164);
+            g.strokeStyle = isLitPass ? '#E5B869' : '#CBD5E1';
+            g.lineWidth = 7;
+            g.strokeRect(-82, -82, 164, 164);
+            g.beginPath();
+            g.arc(0, 0, 54, 0, Math.PI * 2);
+            g.fillStyle = isLitPass ? 'rgba(229, 184, 105, 0.35)' : 'rgba(148, 163, 184, 0.15)';
+            g.fill();
+            g.lineWidth = 3;
+            g.stroke();
+            g.beginPath();
+            g.moveTo(0, 0);
+            g.lineTo(Math.cos(time * 1.8) * 40, Math.sin(time * 1.8) * 40);
+            g.moveTo(0, 0);
+            g.lineTo(Math.cos(-time * 0.4) * 28, Math.sin(-time * 0.4) * 28);
+            g.stroke();
+            g.restore();
+        }
+
+        // WORLD 3: THE SHATTERED KINTSUGI CASTLE & SINGING GOLDEN THREADS (Image 5)
+        function drawWorld3_KintsugiShards(g, time, isLitPass) {
+            g.fillStyle = isLitPass ? '#091D1A' : '#0A0D12';
+            g.fillRect(-950, -550, 1900, 1100);
+
+            if (!isLitPass) drawCharcoalSketchHatching(g, time);
+
+            const scatter = (1.0 - state.kintsugiWeave) * 195;
+            const shards = [
+                { ox: -165, oy: -95, dx: -1.2, dy: -0.9, w: 220, h: 170 },
+                { ox: 155, oy: -105, dx: 1.3, dy: -0.8, w: 230, h: 175 },
+                { ox: -175, oy: 95, dx: -1.1, dy: 1.1, w: 225, h: 165 },
+                { ox: 165, oy: 100, dx: 1.2, dy: 1.0, w: 220, h: 170 },
+                { ox: -340, oy: -10, dx: -1.8, dy: 0.2, w: 130, h: 135 },
+                { ox: 345, oy: 5, dx: 1.8, dy: -0.2, w: 130, h: 135 }
+            ];
+
+            shards.forEach((sh, idx) => {
+                const sx = sh.ox + sh.dx * scatter + Math.sin(time * 1.3 + idx) * (6 + scatter * 0.08);
+                const sy = sh.oy + sh.dy * scatter + Math.cos(time * 1.1 + idx) * (6 + scatter * 0.08);
+
+                g.save();
+                g.translate(sx, sy);
+                g.rotate((1.0 - state.kintsugiWeave) * (idx % 2 === 0 ? -0.22 : 0.22));
+
+                g.beginPath();
+                g.moveTo(-sh.w * 0.48, -sh.h * 0.42);
+                g.lineTo(sh.w * 0.5, -sh.h * 0.48);
+                g.lineTo(sh.w * 0.42, sh.h * 0.46);
+                g.lineTo(-sh.w * 0.45, sh.h * 0.38);
+                g.closePath();
+
+                const shGrad = g.createLinearGradient(0, -sh.h / 2, 0, sh.h / 2);
+                shGrad.addColorStop(0, isLitPass ? '#38BDF8' : '#161C24');
+                shGrad.addColorStop(0.6, isLitPass ? '#1E40AF' : '#12171E');
+                shGrad.addColorStop(1, isLitPass ? '#15803D' : '#0E1318');
+                g.fillStyle = shGrad;
+                g.fill();
+
+                // Castle Spires & Glowing Windows inside the top-right shards
+                if (idx === 1 || idx === 0) {
+                    g.fillStyle = isLitPass ? '#1E293B' : '#222934';
+                    g.fillRect(-35, -55, 28, 85);
+                    g.fillRect(5, -75, 34, 105);
+                    g.fillStyle = isLitPass ? '#FDE047' : '#94A3B8';
+                    g.fillRect(-25, -35, 6, 10);
+                    g.fillRect(16, -50, 7, 12);
+                }
+
+                g.strokeStyle = isLitPass ? '#FDE047' : 'rgba(215, 222, 232, 0.6)';
+                g.lineWidth = isLitPass ? 3.8 : 1.8;
+                g.stroke();
+                g.restore();
+
+                // Golden Kintsugi Filaments connecting shards
+                g.strokeStyle = isLitPass ? '#FACC15' : 'rgba(203, 213, 225, 0.38)';
+                g.lineWidth = isLitPass ? 2.6 : 1.2;
+                g.beginPath();
+                g.moveTo(sx, sy);
+                g.quadraticCurveTo(sx * 0.5, sy * 0.5 + Math.sin(time * 5 + idx) * 14, 0, 0);
+                g.stroke();
+            });
+        }
+
+        // WORLD 4: THE SKY CITADEL, CLOUD HALO, WATERFALL ARCH & TREEHOUSE BALCONY (Image 3)
+        function drawWorld4_SkyCitadel(g, time, isLitPass) {
+            const sky = g.createLinearGradient(0, -520, 0, 520);
+            sky.addColorStop(0, isLitPass ? '#0D47A1' : '#0B0F15');
+            sky.addColorStop(0.55, isLitPass ? '#38BDF8' : '#151B24');
+            sky.addColorStop(1, isLitPass ? '#2E7D32' : '#0E1319');
+            g.fillStyle = sky;
+            g.fillRect(-950, -550, 1900, 1100);
+
+            if (!isLitPass) drawCharcoalSketchHatching(g, time);
+
+            // Mossy Stone Arch & Cascading Turquoise Waterfall in the Valley
+            g.beginPath();
+            g.arc(-40, 105, 105, Math.PI, 0, false);
+            g.lineWidth = 24;
+            g.strokeStyle = isLitPass ? '#4CAF50' : '#26303D';
+            g.stroke();
+
+            for (let w = 0; w < 14; w++) {
+                const wx = -105 + w * 10;
+                const wyOffset = (time * 145 + w * 35) % 270;
+                g.strokeStyle = isLitPass ? 'rgba(125, 249, 255, 0.85)' : 'rgba(203, 213, 225, 0.35)';
+                g.lineWidth = 4;
+                g.beginPath();
+                g.moveTo(wx, 105 + wyOffset * 0.2);
+                g.lineTo(wx - 8, 105 + wyOffset);
+                g.stroke();
+            }
+
+            // Levitating Sky Citadel & Orbiting Cloud Ring Overhead
+            const citY = -170 + Math.sin(time * 1.5) * 10;
+            g.save();
+            g.translate(135, citY);
+
+            g.fillStyle = isLitPass ? '#475569' : '#1B222C';
+            g.strokeStyle = isLitPass ? '#E5B869' : '#94A3B8';
+            g.lineWidth = 1.8;
+            g.beginPath();
+            g.moveTo(-150, 20);
+            g.lineTo(150, 20);
+            g.lineTo(0, 145);
+            g.closePath();
+            g.fill();
+            g.stroke();
+
+            const spires = [
+                { x: -75, w: 32, h: 95 },
+                { x: -35, w: 38, h: 135 },
+                { x: 0, w: 48, h: 190 },
+                { x: 42, w: 36, h: 125 },
+                { x: 80, w: 30, h: 90 }
+            ];
+            spires.forEach((sp) => {
+                g.fillStyle = isLitPass ? '#E0F2FE' : '#222B38';
+                g.fillRect(sp.x - sp.w / 2, 20 - sp.h, sp.w, sp.h);
+                g.strokeRect(sp.x - sp.w / 2, 20 - sp.h, sp.w, sp.h);
+                g.fillStyle = isLitPass ? '#FACC15' : '#64748B';
+                g.beginPath();
+                g.moveTo(sp.x - sp.w / 2 - 4, 20 - sp.h);
+                g.lineTo(sp.x, 20 - sp.h - 44);
+                g.lineTo(sp.x + sp.w / 2 + 4, 20 - sp.h);
+                g.closePath();
+                g.fill();
+            });
+
+            g.strokeStyle = isLitPass ? 'rgba(255, 255, 255, 0.92)' : 'rgba(203, 213, 225, 0.42)';
+            g.lineWidth = 11;
+            g.beginPath();
+            g.ellipse(0, 18, 220, 38, 0, 0, Math.PI * 2);
+            g.stroke();
+            g.restore();
+
+            // Foreground Wooden Treehouse Balcony & Swinging Warm Golden Lantern
+            g.fillStyle = isLitPass ? '#78350F' : '#181D24';
+            g.strokeStyle = isLitPass ? '#F59E0B' : '#94A3B8';
+            g.lineWidth = 2;
+            g.fillRect(-520, -450, 42, 900);
+            g.strokeRect(-520, -450, 42, 900);
+            g.fillRect(-520, -85, 250, 24);
+            g.strokeRect(-520, -85, 250, 24);
+
+            const lanSwing = Math.sin(time * 2.4) * 14;
+            const hx = -310 + lanSwing;
+            const hy = -10;
+            const aura = g.createRadialGradient(hx, hy, 4, hx, hy, isLitPass ? 145 : 48);
+            aura.addColorStop(0, isLitPass ? '#FFFDF2' : '#E2E8F0');
+            aura.addColorStop(0.35, isLitPass ? 'rgba(251, 191, 36, 0.9)' : 'rgba(180, 195, 210, 0.35)');
+            aura.addColorStop(1, 'rgba(0,0,0,0)');
+            g.fillStyle = aura;
+            g.beginPath();
+            g.arc(hx, hy, isLitPass ? 145 : 48, 0, Math.PI * 2);
+            g.fill();
+        }
+
+        // Subtle diagonal silverpoint hatching lines so the uncolored state looks like a hand-drawn sketch
+        function drawCharcoalSketchHatching(g, time) {
+            g.save();
+            g.strokeStyle = 'rgba(203, 213, 225, 0.055)';
+            g.lineWidth = 1;
+            for (let i = -900; i < 900; i += 28) {
+                g.beginPath();
+                g.moveTo(i, -520);
+                g.lineTo(i + 240, 520);
+                g.stroke();
+            }
+            g.restore();
+        }
+
+        function drawFivePointStar(g, cx, cy, outerR, innerR, fillStyle) {
+            g.fillStyle = fillStyle;
+            g.beginPath();
+            for (let i = 0; i < 10; i++) {
+                const r = i % 2 === 0 ? outerR : innerR;
+                const a = (i * Math.PI) / 5 - Math.PI / 2;
+                const x = cx + Math.cos(a) * r;
+                const y = cy + Math.sin(a) * r;
+                if (i === 0) g.moveTo(x, y);
+                else g.lineTo(x, y);
+            }
+            g.closePath();
+            g.fill();
+        }
+
+        function definePortalAperturePath(g) {
+            const pw = 210;
+            const ph = 275;
+            g.beginPath();
+            g.moveTo(-pw, ph);
+            g.lineTo(-pw, -40);
+            g.quadraticCurveTo(-pw, -ph, 0, -ph - 35);
+            g.quadraticCurveTo(pw, -ph, pw, -40);
+            g.lineTo(pw, ph);
+            g.closePath();
+        }
+
+        const WORLD_DRAWERS = [
+            drawWorld0_IvyArchway,
+            drawWorld1_SeaOfStars,
+            drawWorld2_GalleryOfFrames,
+            drawWorld3_KintsugiShards,
+            drawWorld4_SkyCitadel
+        ];
+
+        // Renders the active Dream World centered on a given 2D context
+        function renderCurrentWorldScene(targetCtx, worldIdx, time, isLitPass) {
+            targetCtx.save();
+            targetCtx.translate(W / 2, H / 2);
+            const scale = Math.max(W / 1280, H / 820);
+            targetCtx.scale(scale, scale);
+            WORLD_DRAWERS[worldIdx](targetCtx, time, isLitPass);
+            targetCtx.restore();
+        }
+
+        // -------------------------------------------------------------------------
+        // F. MASTER ANIMATION LOOP (SKETCH BASE + WATERCOLOR MASK COMPOSITE + BALLOONS)
+        // -------------------------------------------------------------------------
+        let lastFrameTime = performance.now();
+        let startTime = performance.now();
+
+        function animatePortalTheatre(now) {
+            requestAnimationFrame(animatePortalTheatre);
+            const dt = Math.min(0.05, (now - lastFrameTime) * 0.001);
+            lastFrameTime = now;
+            const time = (now - startTime) * 0.001;
+
+            state.smoothPortalProgress += (state.targetPortalProgress - state.smoothPortalProgress) * 0.09;
+            const currentWorld = Math.min(4, Math.max(0, Math.round(state.smoothPortalProgress)));
+            if (currentWorld !== state.activePortalIndex) {
+                state.activePortalIndex = currentWorld;
+                syncPortalChapterUI(currentWorld);
+                updateHudPaintedPercentage();
+                if (state.musicBoxEnabled) playPortalChord(currentWorld);
+            }
+
+            // 1. Render the Colorless Charcoal Sketch Base directly onto the main canvas
+            ctx.clearRect(0, 0, W, H);
+            renderCurrentWorldScene(ctx, currentWorld, time, false);
+
+            // 2. Render the Full Vibrant Animated World onto offscreen `colorBuffer`,
+            //    apply any custom pigment watercolor glazes, and mask it by `worldMaskCanvases[currentWorld]`!
+            colorCtx.clearRect(0, 0, W, H);
+            renderCurrentWorldScene(colorCtx, currentWorld, time, true);
+
+            // Blend custom pigment tint glazes onto the lit painting
+            colorCtx.save();
+            colorCtx.globalCompositeOperation = 'overlay';
+            colorCtx.drawImage(worldTintCanvases[currentWorld], 0, 0);
+            colorCtx.restore();
+
+            // Mask the vibrant animated scene using the accumulated Balloon Watercolor Splatters!
+            colorCtx.save();
+            colorCtx.globalCompositeOperation = 'destination-in';
+            colorCtx.drawImage(worldMaskCanvases[currentWorld], 0, 0);
+            colorCtx.restore();
+
+            // Composite the colored watercolor patches on top of the monochrome charcoal sketch!
+            ctx.drawImage(colorBuffer, 0, 0);
+
+            // 3. Update & Draw Flying 3D Arced Color Balloons in mid-air
+            for (let i = state.flyingBalloons.length - 1; i >= 0; i--) {
+                const b = state.flyingBalloons[i];
+                b.elapsed += dt;
+                const t = Math.min(1, b.elapsed / b.duration);
+
+                // Parabolic 3D trajectory from bottom of screen to target click point
+                const bx = b.startX + (b.targetX - b.startX) * t;
+                const by = b.startY + (b.targetY - b.startY) * t - Math.sin(t * Math.PI) * b.arcHeight;
+                // Perspective scale as balloon flies away from viewer into the canvas
+                const bScale = 1.65 - t * 0.72;
+                const bRadius = 22 * bScale;
+
+                // Draw shadow on the canvas below the balloon
+                const shadowY = b.startY + (b.targetY - b.startY) * t;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+                ctx.beginPath();
+                ctx.ellipse(bx, shadowY, bRadius * 0.7, bRadius * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw shiny liquid-filled Color Balloon
+                ctx.save();
+                ctx.translate(bx, by);
+                ctx.rotate(Math.sin(time * 18 + b.wobblePhase) * 0.18);
+                const balGrad = ctx.createRadialGradient(-bRadius * 0.3, -bRadius * 0.3, 2, 0, 0, bRadius);
+                balGrad.addColorStop(0, '#FFFFFF');
+                balGrad.addColorStop(0.35, b.shellColor);
+                balGrad.addColorStop(1, '#090D16');
+                ctx.fillStyle = balGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, bRadius * 0.88, bRadius * 1.08, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#FFFDF5';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.restore();
+
+                // When balloon reaches target (t >= 1), BURST and stamp watercolor!
+                if (t >= 1) {
+                    stampWatercolorSplatter(
+                        b.worldIdx,
+                        b.targetX,
+                        b.targetY,
+                        b.splashRadius,
+                        b.pigmentKey,
+                        b.shellColor
+                    );
+                    state.flyingBalloons.splice(i, 1);
+                }
+            }
+
+            // 4. Render Burst Droplet Particles & Watercolor Shockwave Rings
+            for (let i = state.dropletParticles.length - 1; i >= 0; i--) {
+                const p = state.dropletParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.28; // gravity on paint droplets
+                p.alpha *= 0.93;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
+                if (p.alpha < 0.04) state.dropletParticles.splice(i, 1);
+            }
+            ctx.globalAlpha = 1;
+
+            for (let i = state.ripples.length - 1; i >= 0; i--) {
+                const rp = state.ripples[i];
+                rp.r += (rp.maxR - rp.r) * 0.16;
+                rp.alpha *= 0.91;
+                ctx.strokeStyle = rp.color || '#FCE1A6';
+                ctx.globalAlpha = rp.alpha;
+                ctx.lineWidth = 2.8;
+                ctx.beginPath();
+                ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+                ctx.stroke();
+                if (rp.alpha < 0.03) state.ripples.splice(i, 1);
+            }
+            ctx.globalAlpha = 1;
+
+            // 5. Draw aiming reticle showing the selected Balloon Pigment & Splash Radius preview
+            drawBalloonAimReticle(ctx, time);
+        }
+
+        function drawBalloonAimReticle(g, time) {
+            g.save();
+            g.translate(state.mouseX, state.mouseY);
+
+            // Dashed splash radius preview ring (~few centimeters around cursor)
+            g.strokeStyle = state.selectedPigmentHex;
+            g.lineWidth = 1.5;
+            g.setLineDash([5, 5]);
+            g.beginPath();
+            g.arc(0, 0, 38 + Math.sin(time * 4) * 3, 0, Math.PI * 2);
+            g.stroke();
+            g.setLineDash([]);
+
+            // Center pigment droplet icon
+            g.fillStyle = state.selectedPigmentHex;
+            g.beginPath();
+            g.arc(0, 0, 5.5, 0, Math.PI * 2);
+            g.fill();
+            g.restore();
+        }
+
+        // -------------------------------------------------------------------------
+        // G. INTERACTION & NAVIGATION CONTROLS
+        // -------------------------------------------------------------------------
+        window.addEventListener('mousemove', (e) => {
+            state.mouseX = e.clientX;
+            state.mouseY = e.clientY;
+
+            // Rapid balloon throw while holding mouse button and dragging
+            if (state.isDraggingThrow && performance.now() - state.lastDragThrowTime > 125) {
+                state.lastDragThrowTime = performance.now();
+                throwColorBalloon(e.clientX, e.clientY);
+            }
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            if (
+                e.target.closest('button') ||
+                e.target.closest('input') ||
+                e.target.closest('textarea') ||
+                e.target.closest('header') ||
+                e.target.closest('.grimoire-card') ||
+                e.target.closest('#oracleModal')
+            ) {
+                return;
+            }
+            state.isDraggingThrow = true;
+            state.lastDragThrowTime = performance.now();
+            throwColorBalloon(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mouseup', () => {
+            state.isDraggingThrow = false;
+        });
+
+        // Touch support for mobile balloon throwing
+        window.addEventListener('touchstart', (e) => {
+            if (
+                e.target.closest('button') ||
+                e.target.closest('input') ||
+                e.target.closest('textarea') ||
+                e.target.closest('header') ||
+                e.target.closest('.grimoire-card') ||
+                e.target.closest('#oracleModal')
+            ) {
+                return;
+            }
+            const touch = e.touches[0];
+            if (touch) {
+                state.mouseX = touch.clientX;
+                state.mouseY = touch.clientY;
+                throwColorBalloon(touch.clientX, touch.clientY);
+            }
+        }, { passive: true });
+
+        window.addEventListener('scroll', () => {
+            const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+            const norm = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+            state.targetPortalProgress = norm * 4.0;
+        });
+
+        function diveToPortal(portalIdx) {
+            const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+            window.scrollTo({
+                top: (portalIdx / 4.0) * maxScroll,
+                behavior: 'smooth'
+            });
+            if (state.musicBoxEnabled) playPortalChord(portalIdx);
+        }
+
+        function syncPortalChapterUI(activeIdx) {
+            document.getElementById('hudPortalLabel').textContent = PORTAL_TITLES[activeIdx] || PORTAL_TITLES[0];
+            for (let i = 0; i < 5; i++) {
+                const card = document.getElementById(`portalCard${i}`);
+                if (card) {
+                    if (i === activeIdx) card.classList.add('is-active');
+                    else card.classList.remove('is-active');
+                }
+            }
+            document.querySelectorAll('.portal-nav-btn').forEach((btn) => {
+                const p = parseInt(btn.getAttribute('data-portal'), 10);
+                if (p === activeIdx) {
+                    btn.className = "portal-nav-btn px-3.5 py-1.5 rounded-full text-xs font-serif transition-all bg-lantern text-void font-semibold cursor-pointer";
+                } else {
+                    btn.className = "portal-nav-btn px-3.5 py-1.5 rounded-full text-xs font-serif text-mist hover:text-cloud transition-all cursor-pointer";
+                }
+            });
+        }
+
+        function setKintsugiWeaveAmount(val) {
+            const pct = parseFloat(val);
+            state.kintsugiWeave = pct / 100;
+            const label = document.getElementById('kintsugiWeavePct');
+            if (label) label.textContent = `${Math.round(pct)}% Healed`;
+            const slider = document.getElementById('kintsugiWeaveSlider');
+            if (slider) slider.value = pct;
+        }
+
+        // -------------------------------------------------------------------------
+        // H. GEMINI PHILOSOPHICAL ORACLE & COLOR PSYCHOLOGY INTERPRETER
+        // -------------------------------------------------------------------------
+        function openOracleModal() {
+            const m = document.getElementById('oracleModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeOracleModal() {
+            const m = document.getElementById('oracleModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        const ORACLE_PRESETS = [
+            {
+                text: "I threw golden and cyan pigment balloons at a colorless Gothic archway until the sixteen stars and mirror sea blazed into life.",
+                portal: 1
+            },
+            {
+                text: "Inside a shattered castle painting, each splash of color pulled the broken shards together with singing golden Kintsugi threads.",
+                portal: 3
+            },
+            {
+                text: "On a treehouse balcony, my watercolor splashes awakened a turquoise waterfall arch and a floating Sky Citadel.",
+                portal: 4
+            }
+        ];
+
+        function selectOraclePreset(idx) {
+            const p = ORACLE_PRESETS[idx];
+            document.getElementById('oracleDreamInput').value = p.text;
+            diveToPortal(p.portal);
+            consultDreamOracle();
+        }
+
+        function switchOracleTab(tabKey) {
+            document.querySelectorAll('.oracle-tab').forEach((btn) => {
+                if (btn.getAttribute('data-tab') === tabKey) {
+                    btn.className = "oracle-tab px-3.5 py-1.5 rounded-full text-xs font-mono bg-lantern text-void font-semibold cursor-pointer";
+                } else {
+                    btn.className = "oracle-tab px-3.5 py-1.5 rounded-full text-xs font-mono text-mist hover:text-cloud cursor-pointer";
+                }
+            });
+            const lens = state.oracleLenses[tabKey];
+            if (lens) {
+                document.getElementById('oracleLensHeading').textContent = lens.heading;
+                document.getElementById('oracleMotifTag').textContent = lens.motif;
+                document.getElementById('oracleLensBody').textContent = lens.body;
+                document.getElementById('oracleLensQuestion').textContent = lens.question;
+            }
+        }
+
+        async function consultDreamOracle() {
+            const dreamText = document.getElementById('oracleDreamInput').value.trim();
+            if (!dreamText) return;
+
+            const btn = document.getElementById('consultOracleBtn');
+            const orig = btn.innerHTML;
+            btn.innerHTML = `<span>Inscribing Runes &amp; Consulting Oracle...</span>`;
+            btn.disabled = true;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [{
+                            text: `Dream recollection: "${dreamText}".
+Generate three rich philosophical interpretations of this dream:
+1. Jungian Archetype (The Threshold & Shadow/Self)
+2. Poetics of Space (Gaston Bachelard's miniature, immensity, and nested sanctuaries)
+3. Kintsugi Synthesis (How broken dream fragments bind with gold)
+Also provide 2 short poetic secret rune whispers to hide inside the Lantern Reveal layer.`
+                        }]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                keyMotif: { type: "STRING" },
+                                jungianHeading: { type: "STRING" },
+                                jungianBody: { type: "STRING" },
+                                jungianQuestion: { type: "STRING" },
+                                existentialHeading: { type: "STRING" },
+                                existentialBody: { type: "STRING" },
+                                existentialQuestion: { type: "STRING" },
+                                kintsugiHeading: { type: "STRING" },
+                                kintsugiBody: { type: "STRING" },
+                                kintsugiQuestion: { type: "STRING" },
+                                runeWhisper1: { type: "STRING" },
+                                runeWhisper2: { type: "STRING" }
+                            },
+                            required: [
+                                "keyMotif", "jungianHeading", "jungianBody", "jungianQuestion",
+                                "existentialHeading", "existentialBody", "existentialQuestion",
+                                "kintsugiHeading", "kintsugiBody", "kintsugiQuestion",
+                                "runeWhisper1", "runeWhisper2"
+                            ]
+                        }
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+                    state.oracleLenses = {
+                        jungian: {
+                            heading: parsed.jungianHeading,
+                            motif: `Motif: ${parsed.keyMotif}`,
+                            body: parsed.jungianBody,
+                            question: `Contemplation: “${parsed.jungianQuestion}”`
+                        },
+                        existential: {
+                            heading: parsed.existentialHeading,
+                            motif: `Motif: ${parsed.keyMotif}`,
+                            body: parsed.existentialBody,
+                            question: `Contemplation: “${parsed.existentialQuestion}”`
+                        },
+                        kintsugi: {
+                            heading: parsed.kintsugiHeading,
+                            motif: `Motif: ${parsed.keyMotif}`,
+                            body: parsed.kintsugiBody,
+                            question: `Contemplation: “${parsed.kintsugiQuestion}”`
+                        }
+                    };
+                    state.runes[0].whisper = `“${parsed.runeWhisper1}”`;
+                    state.runes[1].whisper = `“${parsed.runeWhisper2}”`;
+                    document.getElementById('oracleStageSummary').textContent =
+                        `Inscribed "${parsed.keyMotif}" into the Lantern Reveal layer.`;
+                    switchOracleTab('jungian');
+                } else {
+                    throw new Error("Fallback");
+                }
+            } catch (err) {
+                state.runes[0].whisper = `“${dreamText.slice(0, 52)}...”`;
+                switchOracleTab('jungian');
+            } finally {
+                btn.innerHTML = orig;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        window.onload = () => {
+            requestAnimationFrame(animatePortalTheatre);
+            // Throw one welcoming initial color balloon right at the Traveler's Lantern on load!
+            setTimeout(() => {
+                throwColorBalloon(window.innerWidth * 0.52, window.innerHeight * 0.56, 'true', '#FCE1A6');
+            }, 450);
+        };
+    </script>
+</body>
+
+</html>

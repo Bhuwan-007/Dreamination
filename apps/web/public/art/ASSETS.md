@@ -10,10 +10,10 @@ Record of generated artwork created for The Dream Machine per `Design.md` sectio
 | **A3** | `scenery-color-tall.webp` | 2026-10-31 | AI-generated (Variant 2 chosen) | Vertical 9:16 fantasy landscape in layered watercolor: foreground lantern balcony, ancient tree, mountain waterfall arch, floating castle wrapped in cloud ring overhead |
 | **A4a** | `fragments.webp` | 2026-10-31 | AI-generated (Variant 1 chosen) | Dozens of empty picture frames, doors and mirrors drifting in a dark starry void, tiny glimpses inside, golden stardust ribbon |
 | **A4b** | `weave.webp` | 2026-10-31 | AI-generated (Variant 1 chosen) | Torn fragments of paper and glass drifting and stitched together with glowing golden light threads into a unified landscape painting |
-| **A4c** | `reflect.webp` | 2026-10-31 | Algorithmic canvas (model quota exhausted) | Paper lanterns floating over still dark lake at dawn with golden reflections on water and morning mist |
-| **A4d** | `remember.webp` | 2026-10-31 | Algorithmic canvas (model quota exhausted) | Constellation of tiny symbols joined by faint golden lines across deep forest-night sky |
-| **A4e** | `watch-frame.webp` | 2026-10-31 | Algorithmic canvas (model quota exhausted) | Ornate thin-lined double frame like a cinema screen floating over a meadow, showing dreamlike valley inside |
-| **A4f** | `vault.webp` | 2026-10-31 | Algorithmic canvas (model quota exhausted) | Sealed round stone door at bottom of dark still pool with light glowing from keyhole and water ripples |
+| **A4c** | `reflect.webp` | 2026-11-01 | AI-generated (Variant 4 chosen) | Paper lanterns floating across still dark-teal stream at dawn framed by misty pines |
+| **A4d** | `remember.webp` | 2026-11-01 | AI-generated (Variant 1 chosen) | Deep midnight sky with intricate glowing alchemical runes and dream glyphs interconnected by golden thread lines |
+| **A4e** | `watch-frame.webp` | 2026-11-01 | AI-generated (Variant 2 chosen) | Ornate glowing double-lined filigree frame floating in misty forest-night clearing showing cel-shaded valley inside |
+| **A4f** | `vault.webp` | 2026-11-01 | AI-generated (Variant 1 chosen) | Round mossy stone hatch at the bottom of dark woodland pool with lantern-gold light streaming through water ripples |
 | **A4g** | `cta-door.webp` | 2026-10-31 | Algorithmic canvas (model quota exhausted) | Solitary traveler seen from behind standing before great open doorway on hill at dawn with light pouring out |
 | **A5** | `logo-concept.png` | 2026-10-31 | Generated in code from §16 vector starter | Minimal Traveler emblem on rounded `#090D11` square: arched doorway, sun ring, floating island, silhouette |
 | **A6** | `empty-balcony.webp` | 2026-10-31 | Algorithmic canvas (model quota exhausted) | Quiet wooden balcony with glowing warm paper lantern empty state |

@@ -6,11 +6,14 @@ import { Users, Sparkles, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { ArchCard } from "@/components/ui/arch-card";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { PageBackdrop } from "@/components/ui/page-backdrop";
 
 export default function CastPage() {
   return (
-    <AppShell>
-      <div className="max-w-3xl mx-auto px-6 py-16 text-center space-y-8">
+    <div data-theme="night" className="min-h-screen bg-bg text-text">
+      <AppShell>
+        <PageBackdrop src="/art/portal-window.webp" alt="The Portal Window Cast backdrop" opacity={0.68} />
+        <div className="max-w-3xl mx-auto px-6 py-16 text-center space-y-8">
         <ArchCard isDoubleFrame isArchedTop className="p-12 space-y-6 max-w-lg mx-auto">
           <div className="w-16 h-16 mx-auto rounded-full border border-accent/40 bg-accent/10 flex items-center justify-center">
             <Users className="w-7 h-7 text-accent animate-pulse motion-reduce:animate-none" />
@@ -38,6 +41,7 @@ export default function CastPage() {
         </ArchCard>
       </div>
     </AppShell>
+    </div>
   );
 }
 

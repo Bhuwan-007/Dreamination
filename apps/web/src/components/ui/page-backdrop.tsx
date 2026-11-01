@@ -1,55 +1,73 @@
-"use client";
-
 import React from "react";
 import Image from "next/image";
 
-export interface PageBackdropProps {
+interface PageBackdropProps {
   src: string;
-  alt?: string;
-  opacity?: number; // 0.35 to 0.55 per Section 10 / Section 12
-  scrim?: "default" | "heavy" | "subtle";
+  alt: string;
+  opacity?: number; // 0.60 to 0.75
   priority?: boolean;
+  headerBandOnly?: boolean;
   className?: string;
 }
 
+/**
+ * Fixed art layer reusing project watercolor artworks across non-landing pages.
+ * Displays at 60-75% opacity, darkened only by edge gradients (never a flat dark overlay),
+ * object-cover, and locked strictly to Night palette to prevent Dawn leaks over art.
+ */
 export function PageBackdrop({
   src,
-  alt = "Atmospheric dream artwork",
-  opacity = 0.42,
-  scrim = "default",
+  alt,
+  opacity = 0.68,
   priority = false,
+  headerBandOnly = false,
   className = "",
 }: PageBackdropProps) {
-  const scrimOpacityClass =
-    scrim === "heavy"
-      ? "bg-bg/85"
-      : scrim === "subtle"
-      ? "bg-bg/50"
-      : "bg-bg/70";
+  const clampedOpacity = Math.max(0.6, Math.min(0.75, opacity));
+
+  if (headerBandOnly) {
+    return (
+      <div
+        data-theme="night"
+        className={`absolute top-0 left-0 right-0 h-64 sm:h-72 pointer-events-none select-none z-0 overflow-hidden ${className}`}
+        aria-hidden="true"
+      >
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          priority={priority}
+          sizes="100vw"
+          className="object-cover object-center"
+          style={{ opacity: clampedOpacity }}
+        />
+        {/* Edge gradients to blend smoothly into page content */}
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#090D11] via-[#090D11]/60 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#090D11] via-[#090D11]/70 to-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div
-      className={`fixed inset-0 pointer-events-none -z-10 overflow-hidden ${className}`}
+      data-theme="night"
+      className={`fixed inset-0 pointer-events-none select-none z-0 overflow-hidden ${className}`}
       aria-hidden="true"
     >
-      {/* 1. Underlying Art Image */}
       <Image
         src={src}
         alt={alt}
         fill
-        sizes="100vw"
         priority={priority}
+        sizes="100vw"
         className="object-cover object-center"
-        style={{ opacity: Math.min(Math.max(opacity, 0.35), 0.55) }}
+        style={{ opacity: clampedOpacity }}
       />
-
-      {/* 2. Dark Scrim Layer for text contrast >= 4.5:1 */}
-      <div className={`absolute inset-0 ${scrimOpacityClass}`} />
-
-      {/* 3. Gradient edge darkening and vignette */}
-      <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-bg/90" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,var(--bg)_95%)]" />
+      {/* Top and bottom edge gradients - no flat overlay */}
+      <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-[#090D11] via-[#090D11]/60 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#090D11] via-[#090D11]/75 to-transparent" />
+      <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#090D11]/40 to-transparent" />
+      <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#090D11]/40 to-transparent" />
     </div>
   );
 }
-
