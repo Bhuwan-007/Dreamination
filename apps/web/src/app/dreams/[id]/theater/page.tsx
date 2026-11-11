@@ -1,42 +1,48 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowLeft,
-  Camera,
-  Clapperboard,
-  Code,
-  Copy,
-  Eye,
-  Layers,
-  MapPin,
+  Download,
+  EyeOff,
+  Pause,
   Play,
   RefreshCw,
+  Sparkles,
+  Users,
   Volume2,
+  VolumeX,
 } from "lucide-react";
 import {
+  ApiError,
   apiClient,
-  DirectorSceneData,
-  DirectorScriptData,
+  FilmManifestData,
+  FilmSceneData,
+  RenderJobState,
 } from "@/lib/api-client";
 import { PageBackdrop } from "@/components/ui/page-backdrop";
+import { HaloLoader } from "@/components/ui/halo-loader";
+import { Chip } from "@/components/ui/chip";
 
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-  let token = apiClient.getToken();
-  if (!token) {
-    token = await apiClient.ensureAuthenticated();
-  }
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string> || {}),
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return fetch(url, { ...options, headers });
+const STAGE_COPY: Record<string, string> = {
+  queued: "Gathering the fragments…",
+  directing: "Reading each scene of your dream…",
+  art: "Painting the backdrops and the people in them…",
+  voices: "Giving voices to shadows…",
+  package: "Binding the reel…",
+};
+
+const PLAYER_SRC = "/player/film.html";
+
+function formatTime(seconds: number) {
+  const s = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
+
+type Phase = "loading" | "rendering" | "ready" | "error";
 
 export default function DreamTheaterPage() {
   const params = useParams();
@@ -44,510 +50,382 @@ export default function DreamTheaterPage() {
   const dreamId = (params?.id as string) || "";
   const isExpress = searchParams?.get("express") === "true";
 
-  const [script, setScript] = useState<DirectorScriptData | null>(null);
-  const [activeTab, setActiveTab] = useState<"stage" | "inspector" | "json">("stage");
-  const [selectedSceneIndex, setSelectedSceneIndex] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
+  const [phase, setPhase] = useState<Phase>("loading");
+  const [job, setJob] = useState<RenderJobState | null>(null);
+  const [manifest, setManifest] = useState<FilmManifestData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [copied, setCopied] = useState<boolean>(false);
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const manifestRef = useRef<FilmManifestData | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [sceneIndex, setSceneIndex] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportNote, setExportNote] = useState<string | null>(null);
+
+  const send = useCallback((msg: Record<string, unknown>) => {
+    iframeRef.current?.contentWindow?.postMessage(msg, window.location.origin);
+  }, []);
+
+  // Sent whenever we have a film AND whenever the player (re)announces itself, so neither
+  // side can miss the other however the iframe load and the API calls interleave.
+  // The player ignores a manifest it is already showing.
+  const pushManifestToPlayer = useCallback(() => {
+    if (manifestRef.current) {
+      send({ type: "LOAD_FILM", manifest: manifestRef.current });
+    }
+  }, [send]);
+
+  // ---- Loading / rendering -----------------------------------------------------------
+
+  const loadManifest = useCallback(async () => {
+    const m = await apiClient.getDreamManifest(dreamId);
+    manifestRef.current = m;
+    setManifest(m);
+    setPhase("ready");
+    pushManifestToPlayer();
+  }, [dreamId, pushManifestToPlayer]);
+
+  const pollUntilDone = useCallback(async () => {
+    for (;;) {
+      const state = await apiClient.getRenderStatus(dreamId);
+      setJob(state);
+      if (state.status === "completed") return loadManifest();
+      if (state.status === "failed") throw new Error(state.error || "The film could not be rendered.");
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  }, [dreamId, loadManifest]);
+
+  const startRender = useCallback(async () => {
+    setErrorMessage(null);
+    setPhase("rendering");
+    try {
+      let state: RenderJobState;
+      try {
+        state = await apiClient.renderDream(dreamId);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 400) {
+          // No story yet (e.g. express screening): weave one, then render.
+          await apiClient.reconstructDream(dreamId, "faithful");
+          state = await apiClient.renderDream(dreamId);
+        } else {
+          throw err;
+        }
+      }
+      setJob(state);
+      await pollUntilDone();
+    } catch (err: any) {
+      setErrorMessage(err?.data?.detail || err?.message || "The film could not be rendered.");
+      setPhase("error");
+    }
+  }, [dreamId, pollUntilDone]);
 
   useEffect(() => {
+    if (!dreamId) return;
     let cancelled = false;
-
-    async function loadScript() {
-      if (!dreamId) {
-        setIsLoading(false);
-        return;
-      }
-      setIsLoading(true);
-      setErrorMessage(null);
+    (async () => {
       try {
-        let data: DirectorScriptData;
-        if (isExpress) {
-          // Express bypass: ensure dream is reconstructed, then generate script
-          try {
-            await apiClient.reconstructDream(dreamId, "faithful");
-          } catch {
-            // Already reconstructed
-          }
-          data = await apiClient.generateDirectorScript(dreamId, "nocturne_toon");
-        } else {
-          try {
-            data = await apiClient.getDirectorScript(dreamId);
-          } catch (fetchErr: any) {
-            // If not found yet, generate it
-            try {
-              await apiClient.reconstructDream(dreamId, "faithful");
-            } catch {
-              // ignore
-            }
-            data = await apiClient.generateDirectorScript(dreamId, "nocturne_toon");
-          }
+        const status = await apiClient.getRenderStatus(dreamId);
+        if (cancelled) return;
+        if (status.status === "processing") {
+          setPhase("rendering");
+          setJob(status);
+          await pollUntilDone();
+          return;
         }
-        if (!cancelled) {
-          setScript(data);
+        if (isExpress || !status.manifest_ready) {
+          await startRender();
+          return;
         }
+        await loadManifest();
       } catch (err: any) {
-        console.error("Failed to load director script:", err);
-        if (!cancelled) {
-          setErrorMessage(err.message || "Failed to load director script.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          await startRender();
+        } else {
+          setErrorMessage(err?.message || "Could not open this dream's film.");
+          setPhase("error");
         }
       }
-    }
-
-    loadScript();
-
+    })();
     return () => {
       cancelled = true;
     };
-  }, [dreamId, isExpress]);
+  }, [dreamId, isExpress, loadManifest, pollUntilDone, startRender]);
 
-  const handleReDirect = async () => {
-    if (!dreamId) return;
-    setIsRedirecting(true);
-    setErrorMessage(null);
-    try {
-      let data: DirectorScriptData;
-      if (apiClient && typeof apiClient.generateDirectorScript === "function") {
-        data = await apiClient.generateDirectorScript(dreamId, "nocturne_toon");
-      } else {
-        const res = await fetchWithAuth(
-          `http://localhost:8000/dreams/${dreamId}/director?style_id=nocturne_toon`,
-          {
-            method: "POST",
-          }
-        );
-        if (!res.ok) {
-          throw new Error(`Failed to direct dream: ${res.statusText}`);
-        }
-        data = await res.json();
+  // ---- Player bridge -------------------------------------------------------------------
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+      switch (data.type) {
+        case "FILM_PLAYER_READY":
+          pushManifestToPlayer();
+          break;
+        case "FILM_STATUS":
+          setCurrentTime(data.currentTime ?? 0);
+          setIsPlaying(!!data.isPlaying);
+          setMuted(!!data.muted);
+          if (typeof data.sceneIndex === "number") setSceneIndex(data.sceneIndex);
+          break;
+        case "EXPORT_PROGRESS":
+          setExportProgress(data.progress ?? 0);
+          break;
+        case "EXPORT_COMPLETE":
+          setExporting(false);
+          setExportNote(`Saved as ${String(data.format || "video").toUpperCase()}.`);
+          break;
+        case "EXPORT_ERROR":
+          setExporting(false);
+          setExportNote(data.error || "Export failed.");
+          break;
+        case "FILM_ERROR":
+          setErrorMessage("The player could not load this film's images or sounds.");
+          break;
       }
-      setScript(data);
-      setSelectedSceneIndex(0);
-    } catch (err: any) {
-      console.error("Re-direct failed:", err);
-      setErrorMessage(err.message || "Failed to direct dream.");
-    } finally {
-      setIsRedirecting(false);
-    }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [pushManifestToPlayer]);
+
+  const handleIframeLoad = () => pushManifestToPlayer();
+
+  const seek = (t: number) => {
+    setCurrentTime(t);
+    send({ type: "SEEK", time: t });
   };
 
-  const handleCopyJson = () => {
-    if (!script) return;
-    navigator.clipboard.writeText(JSON.stringify(script, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleExport = () => {
+    setExportNote(null);
+    setExporting(true);
+    setExportProgress(0);
+    send({ type: "EXPORT" });
   };
 
-  const currentScene: DirectorSceneData | undefined = script?.scenes?.[selectedSceneIndex];
+  const total = manifest?.totalDuration ?? 0;
+  const castById = new Map((manifest?.cast ?? []).map((c) => [c.castId, c]));
+  const imageProvider = manifest?.provenance?.imageProvider;
+  const director = manifest?.provenance?.director;
 
   return (
-    <div data-theme="night" className="relative min-h-screen bg-bg text-text font-sans selection:bg-accent/20 selection:text-accent pb-24">
-      {/* Theater page banner with watch-frame art */}
-      <PageBackdrop src="/art/watch-frame.webp" alt="3D Dream Theater banner" opacity={0.68} priority />
+    <div data-theme="night" className="relative min-h-screen bg-bg text-text font-sans pb-24">
+      <PageBackdrop src="/art/watch-frame.webp" alt="" opacity={0.6} priority headerBandOnly />
 
-      {/* Header Bar */}
-      <header className="relative z-20 w-full border-b border-hairline/60 bg-surface/85 backdrop-blur-md px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <header className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/dreams/${dreamId}/reflect`}
-            className="p-2 rounded-lg border border-hairline hover:border-accent/60 text-text-muted hover:text-text transition-colors"
-            title="Back to Reflection"
+            className="p-2 rounded-lg border border-hairline/70 text-mist hover:text-text hover:border-accent/60 transition-colors"
+            aria-label="Back to reflection"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <Clapperboard className="w-4 h-4 text-accent" />
-              <h1 className="text-base font-serif font-medium text-text">
-                {script?.title || "3D Dream Theater"}
-              </h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-accent/10 border border-accent/30 text-accent">
-                {script?.style_id || "nocturne_toon"}
-              </span>
-              {isExpress && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-accent/20 border border-accent/50 text-accent">
-                  Express
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-text-muted font-serif">
-              Directed 3D performance from validated action vocabulary
-            </p>
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-[0.2em] text-accent/90">Watch</p>
+            <h1 className="font-serif text-xl sm:text-2xl text-text truncate">
+              {manifest?.title || "Your dream, as a film"}
+            </h1>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleReDirect}
-            disabled={isRedirecting || isLoading}
-            className="px-3 py-1.5 rounded-lg border border-hairline bg-surface hover:border-lantern/60 text-xs font-serif text-mist hover:text-cloud transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            onClick={startRender}
+            disabled={phase === "rendering" || exporting}
+            className="px-3 py-2 rounded-lg border border-hairline/80 text-sm text-mist hover:text-text hover:border-accent/60 disabled:opacity-50 flex items-center gap-2"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRedirecting ? "animate-spin text-lantern" : ""}`} />
-            <span>{isRedirecting ? "Directing..." : "Re-Direct Dream"}</span>
+            <RefreshCw className={`w-4 h-4 ${phase === "rendering" ? "animate-spin motion-reduce:animate-none" : ""}`} />
+            Re-render
           </button>
-
-          <Link
-            href="/lexicon"
-            className="px-3.5 py-1.5 rounded-lg bg-surface border border-hairline text-xs font-serif text-mist hover:text-cloud hover:border-hairline/80 transition-colors"
+          <button
+            onClick={handleExport}
+            disabled={phase !== "ready" || exporting}
+            className="px-3 py-2 rounded-lg bg-lantern text-void text-sm font-semibold hover:bg-lantern-soft disabled:opacity-50 flex items-center gap-2"
           >
-            Lexicon & Weather
-          </Link>
+            <Download className="w-4 h-4" />
+            {exporting ? `Recording ${exportProgress}%` : "Export film"}
+          </button>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="relative z-10 max-w-6xl mx-auto px-6 py-8">
-        {isLoading ? (
-          <div className="py-24 text-center space-y-4">
-            <div className="inline-block p-4 rounded-full border border-lantern/30 bg-forest-night/60 animate-pulse">
-              <Clapperboard className="w-8 h-8 text-lantern animate-spin" />
-            </div>
-            <p className="text-sm font-serif text-mist">
-              Directing camera shots, world kits, and character locomotion...
-            </p>
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 mt-6 space-y-6">
+        {manifest?.stale && phase === "ready" && (
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-accent/40 bg-surface/80 text-sm">
+            <AlertTriangle className="w-4 h-4 text-accent" />
+            <span className="text-cloud">Your story changed after this film was made.</span>
+            <button onClick={startRender} className="underline text-accent">Render the new version</button>
           </div>
-        ) : errorMessage ? (
-          <div className="max-w-md mx-auto p-6 rounded-2xl border border-dusk-rose/40 bg-surface text-center space-y-4">
-            <p className="text-sm text-dusk-rose font-serif">{errorMessage}</p>
-            <button
-              onClick={handleReDirect}
-              className="px-4 py-2 rounded-xl bg-lantern text-void font-semibold text-xs shadow-lantern"
-            >
-              Try Directing Again
-            </button>
-          </div>
-        ) : script ? (
-          <div className="space-y-6">
-            {/* View Mode Tabs */}
-            <div className="flex items-center justify-between border-b border-hairline/60 pb-3">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveTab("stage")}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-serif transition-colors flex items-center gap-1.5 ${
-                    activeTab === "stage"
-                      ? "bg-lantern text-void font-semibold shadow-lantern"
-                      : "text-mist hover:text-cloud bg-surface border border-hairline"
-                  }`}
-                >
-                  <Play className="w-3.5 h-3.5" />
-                  <span>3D Live Stage</span>
-                </button>
+        )}
+        {exportNote && <p className="text-sm text-mist" role="status">{exportNote}</p>}
 
-                <button
-                  onClick={() => setActiveTab("inspector")}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-serif transition-colors flex items-center gap-1.5 ${
-                    activeTab === "inspector"
-                      ? "bg-lantern text-void font-semibold shadow-lantern"
-                      : "text-mist hover:text-cloud bg-surface border border-hairline"
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Screenplay Inspector ({script.scenes?.length || 0} Scenes)</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("json")}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-serif transition-colors flex items-center gap-1.5 ${
-                    activeTab === "json"
-                      ? "bg-lantern text-void font-semibold shadow-lantern"
-                      : "text-mist hover:text-cloud bg-surface border border-hairline"
-                  }`}
-                >
-                  <Code className="w-3.5 h-3.5" />
-                  <span>Director JSON</span>
-                </button>
-              </div>
-
-              {activeTab === "json" && (
-                <button
-                  onClick={handleCopyJson}
-                  className="px-3 py-1 rounded-lg border border-hairline text-xs font-mono text-mist hover:text-cloud hover:border-lantern flex items-center gap-1.5"
-                >
-                  <Copy className="w-3 h-3 text-lantern" />
-                  <span>{copied ? "Copied!" : "Copy JSON"}</span>
-                </button>
+        {/* Stage */}
+        <section className="relative aspect-video w-full rounded-2xl border border-hairline/80 bg-void overflow-hidden shadow-2xl">
+          <iframe
+            ref={iframeRef}
+            src={PLAYER_SRC}
+            onLoad={handleIframeLoad}
+            allow="autoplay; fullscreen"
+            className={`absolute inset-0 w-full h-full border-0 ${phase === "ready" ? "" : "invisible"}`}
+            title="Dream film player"
+          />
+          {phase !== "ready" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-void/90">
+              {phase === "error" ? (
+                <div className="text-center space-y-3 max-w-md">
+                  <AlertTriangle className="w-6 h-6 text-accent mx-auto" />
+                  <p className="text-cloud">{errorMessage}</p>
+                  <button onClick={startRender} className="px-4 py-2 rounded-lg bg-lantern text-void text-sm font-semibold">
+                    Try again
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <HaloLoader
+                    stageText={STAGE_COPY[job?.stage || "queued"] || "Gathering the fragments…"}
+                    subText={phase === "loading" ? undefined : "Every scene is painted from your own words."}
+                  />
+                  {phase === "rendering" && (
+                    <div className="w-64 h-1 rounded-full bg-hairline/40 overflow-hidden" aria-hidden>
+                      <div className="h-full bg-accent transition-all duration-500" style={{ width: `${Math.round((job?.progress ?? 0) * 100)}%` }} />
+                    </div>
+                  )}
+                </>
               )}
             </div>
+          )}
+        </section>
 
-            {/* TAB 1: 3D LIVE STAGE */}
-            {activeTab === "stage" && (
-              <div className="space-y-6">
-                <div className="relative aspect-video w-full rounded-2xl border border-hairline/80 bg-forest-night/80 overflow-hidden shadow-2xl flex flex-col items-center justify-center">
-                  {/* Embedded Three.js player frame */}
-                  <iframe
-                    src="http://localhost:5173"
-                    className="w-full h-full border-none"
-                    title="Three.js Dream Player"
-                  />
+        {/* Controls */}
+        {phase === "ready" && (
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-hairline/60 bg-surface/80">
+            <button
+              onClick={() => send({ type: isPlaying ? "PAUSE" : "PLAY" })}
+              className="p-2.5 rounded-lg bg-lantern text-void"
+              aria-label={isPlaying ? "Pause" : "Play"}
+              disabled={exporting}
+            >
+              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={total || 1}
+              step={0.05}
+              value={currentTime}
+              onChange={(e) => seek(parseFloat(e.target.value))}
+              className="flex-1 accent-lantern"
+              aria-label="Seek"
+              disabled={exporting}
+            />
+            <span className="text-xs font-mono text-mist w-24 text-right">
+              {formatTime(currentTime)} / {formatTime(total)}
+            </span>
+            <button
+              onClick={() => send({ type: "SET_MUTED", muted: !muted })}
+              className="p-2 rounded-lg border border-hairline/70 text-mist hover:text-text"
+              aria-label={muted ? "Unmute" : "Mute"}
+            >
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+          </div>
+        )}
 
-                  {/* Top Overlay HUD */}
-                  <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                    <div className="flex items-center gap-2 bg-void/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-hairline pointer-events-auto">
-                      <Camera className="w-3.5 h-3.5 text-lantern" />
-                      <span className="text-xs font-mono text-cloud">
-                        Shot: {currentScene?.beats?.[0]?.args?.preset || "wide"}
-                      </span>
-                      <span className="text-hairline">|</span>
-                      <span className="text-xs font-mono text-mist">
-                        Kit: {currentScene?.world?.kit || "void"}
-                      </span>
+        {manifest && (
+          <>
+            {/* Cast */}
+            <section aria-labelledby="cast-heading" className="space-y-3">
+              <h2 id="cast-heading" className="font-serif text-lg flex items-center gap-2">
+                <Users className="w-4 h-4 text-accent" /> Who appears ({manifest.cast.length})
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {manifest.cast.map((c) => (
+                  <div key={c.castId} className="rounded-xl border border-hairline/60 bg-surface/80 p-3 flex flex-col items-center text-center gap-2">
+                    <div className="h-28 w-full rounded-lg bg-void flex items-end justify-center overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.figureUrl} alt={`Ink figure of ${c.name}`} className="h-24 object-contain" />
+                    </div>
+                    <span className="text-sm text-text truncate max-w-full">{c.name}</span>
+                    <div className="flex flex-wrap justify-center gap-1">
+                      {c.returning && <Chip variant="lantern">returning</Chip>}
+                      {c.visibility !== "full" && (
+                        <Chip variant="mist" icon={<EyeOff className="w-3 h-3" />}>face unseen</Chip>
+                      )}
                     </div>
                   </div>
-                </div>
-
-                {/* Scene Timeline Selector */}
-                <div className="p-4 rounded-2xl border border-hairline/60 bg-surface/60 backdrop-blur-md space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-serif uppercase tracking-wider text-mist flex items-center gap-2">
-                      <Clapperboard className="w-3.5 h-3.5 text-lantern" />
-                      <span>Scene Sequence ({script.scenes?.length || 0} Scenes)</span>
-                    </div>
-                    <span className="text-xs font-mono text-mist">
-                      Scene {selectedSceneIndex + 1} of {script.scenes?.length || 0}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                    {script.scenes?.map((scene, idx) => (
-                      <button
-                        key={scene.scene_id}
-                        onClick={() => setSelectedSceneIndex(idx)}
-                        className={`p-2.5 rounded-xl border text-left transition-all ${
-                          selectedSceneIndex === idx
-                            ? "bg-forest-night border-lantern/80 shadow-lantern ring-1 ring-lantern/50"
-                            : "bg-void/60 border-hairline hover:border-lantern/40 text-mist"
-                        }`}
-                      >
-                        <div className="text-[10px] font-mono uppercase text-mist">Scene {scene.scene_id}</div>
-                        <div className="text-xs font-serif font-medium text-cloud truncate capitalize">
-                          {scene.world?.kit || "void"}
-                        </div>
-                        <div className="text-[10px] font-mono text-lantern truncate">
-                          {scene.beats?.[0]?.args?.preset || "shot"}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
-            )}
+            </section>
 
-            {/* TAB 2: SCREENPLAY INSPECTOR */}
-            {activeTab === "inspector" && (
-              <div className="space-y-6">
-                {/* Scene Selector Pills */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-hairline/40">
-                  {script.scenes?.map((s, idx) => (
+            {/* Scenes */}
+            <section aria-labelledby="scenes-heading" className="space-y-3">
+              <h2 id="scenes-heading" className="font-serif text-lg">Scenes</h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {manifest.scenes.map((s: FilmSceneData, idx: number) => {
+                  const sky = s.layers.find((l) => l.depth === "sky");
+                  const active = idx === sceneIndex;
+                  return (
                     <button
-                      key={s.scene_id}
-                      onClick={() => setSelectedSceneIndex(idx)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-serif whitespace-nowrap transition-colors ${
-                        selectedSceneIndex === idx
-                          ? "bg-lantern text-void font-semibold"
-                          : "bg-surface border border-hairline text-mist hover:text-cloud"
+                      key={s.sceneId + "-" + idx}
+                      onClick={() => seek(s.startTime + 0.05)}
+                      className={`text-left rounded-xl border overflow-hidden bg-surface/80 transition-colors ${
+                        active ? "border-accent ring-1 ring-accent/50" : "border-hairline/60 hover:border-accent/50"
                       }`}
                     >
-                      Scene {s.scene_id}: {s.world?.kit || "void"}
-                    </button>
-                  ))}
-                </div>
-
-                {currentScene && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Left Column: World & Atmosphere */}
-                    <div className="space-y-4">
-                      <div className="p-5 rounded-2xl border border-hairline bg-surface/80 space-y-4">
-                        <div className="text-xs font-serif uppercase tracking-wider text-mist flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-lantern" />
-                          <span>World Environment</span>
+                      {sky && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={sky.url} alt="" className="w-full aspect-video object-cover" />
+                      )}
+                      <div className="p-3 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-serif text-text truncate">{idx + 1}. {s.heading}</span>
+                          <span className="text-xs font-mono text-mist">{formatTime(s.startTime)}</span>
                         </div>
-
-                        <div className="space-y-2.5 text-xs">
-                          <div className="flex justify-between py-1 border-b border-hairline/40">
-                            <span className="text-mist">World Kit:</span>
-                            <span className="font-mono text-cloud font-medium capitalize">{currentScene.world?.kit || "void"}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-hairline/40">
-                            <span className="text-mist">Sky Preset:</span>
-                            <span className="font-mono text-cloud">{currentScene.world?.sky || "night"}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-hairline/40">
-                            <span className="text-mist">Light Preset:</span>
-                            <span className="font-mono text-cloud">{currentScene.world?.light || "soft"}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-hairline/40">
-                            <span className="text-mist">Transition In:</span>
-                            <span className="font-mono text-cloud">{currentScene.transition_in || "dissolve"}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-hairline/40">
-                            <span className="text-mist">Fog Density:</span>
-                            <span className="font-mono text-cloud">{currentScene.world?.fog?.density ?? 0.03}</span>
-                          </div>
-                        </div>
-
-                        {/* Props Placed */}
-                        <div className="pt-2 space-y-2">
-                          <span className="text-[11px] font-serif uppercase text-mist block">Props Placed</span>
-                          {currentScene.world?.props && currentScene.world.props.length > 0 ? (
-                            <div className="space-y-1.5">
-                              {currentScene.world.props.map((p, pIdx) => (
-                                <div key={pIdx} className="p-2 rounded-lg bg-void/60 border border-hairline text-[11px] flex justify-between">
-                                  <span className="font-mono text-lantern">{p.id}</span>
-                                  <span className="text-mist">at {p.anchor}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-sage italic">No props in this scene</span>
-                          )}
-                        </div>
-
-                        {/* Effects */}
-                        {currentScene.world?.effects && currentScene.world.effects.length > 0 && (
-                          <div className="pt-2 space-y-2">
-                            <span className="text-xs font-serif uppercase text-mist block">Dream Logic Effects</span>
-                            <div className="space-y-1.5">
-                              {currentScene.world.effects.map((ef, eIdx) => (
-                                <div key={eIdx} className="p-2 rounded-lg bg-surface border border-hairline text-xs flex justify-between">
-                                  <span className="font-mono text-leaf capitalize">{ef.type}</span>
-                                  <span className="text-mist">at {ef.at}s ({ef.duration}s)</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Ambient Audio */}
-                      <div className="p-5 rounded-2xl border border-hairline bg-surface/80 space-y-3">
-                        <div className="text-xs font-serif uppercase tracking-wider text-mist flex items-center gap-1.5">
-                          <Volume2 className="w-3.5 h-3.5 text-lake" />
-                          <span>Soundscape</span>
-                        </div>
-                        <div className="text-xs space-y-1">
-                          <div className="text-mist">Ambient Bed: <span className="font-mono text-cloud">{currentScene.ambient || "quiet_wind"}</span></div>
-                          {currentScene.sound_motif && (
-                            <div className="text-mist">Sound Motif: <span className="font-mono text-lantern">{currentScene.sound_motif}</span></div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Middle Column: Cast Members */}
-                    <div className="space-y-4">
-                      <div className="p-5 rounded-2xl border border-hairline bg-surface/80 space-y-4">
-                        <div className="text-xs font-serif uppercase tracking-wider text-mist flex items-center gap-1.5">
-                          <Eye className="w-3.5 h-3.5 text-lantern" />
-                          <span>Scene Cast ({currentScene.cast?.length || 0})</span>
-                        </div>
-
-                        {currentScene.cast && currentScene.cast.length > 0 ? (
-                          <div className="space-y-3">
-                            {currentScene.cast.map((member, mIdx) => (
-                              <div key={mIdx} className="p-3 rounded-xl bg-void/60 border border-hairline space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-serif font-medium text-cloud text-sm">{member.name}</span>
-                                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-surface border border-hairline text-mist uppercase">
-                                    {member.face_visibility || "full"}
-                                  </span>
-                                </div>
-                                <div className="text-xs text-mist flex items-center gap-1">
-                                  <MapPin className="w-3 h-3 text-sage" />
-                                  <span>Spawn anchor: <code className="text-cloud">{member.spawn}</code></span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-sage italic">No character cast present in this scene.</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right Column: Action Beats Timeline */}
-                    <div className="space-y-4">
-                      <div className="p-5 rounded-2xl border border-hairline bg-surface/80 space-y-4">
-                        <div className="text-xs font-serif uppercase tracking-wider text-mist flex items-center gap-1.5">
-                          <Clapperboard className="w-3.5 h-3.5 text-lantern" />
-                          <span>Action Beats Timeline</span>
-                        </div>
-
-                        <div className="space-y-2.5">
-                          {currentScene.beats?.map((beat, bIdx) => (
-                            <div key={bIdx} className="p-3 rounded-xl bg-void/60 border border-hairline space-y-1">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="font-mono text-lantern">t = {beat.t.toFixed(1)}s</span>
-                                <span className="font-mono text-mist uppercase text-xs px-1.5 py-0.5 rounded bg-surface">
-                                  {beat.actor}
-                                </span>
-                              </div>
-
-                              <div className="flex items-baseline gap-2">
-                                <span className="text-xs font-serif font-semibold text-cloud capitalize">
-                                  {beat.action}
-                                </span>
-                                {beat.action === "shot" && (
-                                  <span className="text-xs font-mono text-lake">
-                                    preset: {beat.args?.preset}
-                                  </span>
-                                )}
-                                {beat.action === "walk_to" && (
-                                  <span className="text-xs font-mono text-leaf">
-                                    to: {beat.args?.anchor}
-                                  </span>
-                                )}
-                                {beat.action === "animate" && (
-                                  <span className="text-xs font-mono text-lantern-soft">
-                                    clip: {beat.args?.clip}
-                                  </span>
-                                )}
-                              </div>
-
-                              {beat.action === "speak" && beat.args?.line && (
-                                <div className="mt-2 p-2 rounded bg-surface border border-hairline/60 text-xs font-serif italic text-cloud">
-                                  &ldquo;{beat.args.line}&rdquo;
-                                  {beat.args.emotion && (
-                                    <span className="ml-2 not-italic text-xs font-mono text-lantern">
-                                      ({beat.args.emotion})
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
+                        <p className="text-xs text-mist line-clamp-2">{s.setting}</p>
+                        <div className="flex flex-wrap gap-1">
+                          <Chip variant="lake">{s.mood}</Chip>
+                          {s.characters.map((c) => (
+                            <Chip key={c.castId} variant="mist">{castById.get(c.castId)?.name ?? c.castId}</Chip>
+                          ))}
+                          {s.objects.slice(0, 3).map((o) => (
+                            <Chip key={o.name} variant="leaf">{o.name}</Chip>
+                          ))}
+                          {s.effects.map((e) => (
+                            <Chip key={e.type} variant="dusk-rose">{e.type}</Chip>
                           ))}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </section>
 
-            {/* TAB 3: RAW DIRECTOR JSON */}
-            {activeTab === "json" && (
-              <div className="p-6 rounded-2xl border border-hairline/80 bg-forest-night/90 overflow-x-auto">
-                <pre className="text-xs font-mono text-cloud/90 leading-relaxed">
-                  {JSON.stringify(script, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="max-w-md mx-auto p-6 rounded-2xl border border-hairline/60 bg-surface/60 text-center space-y-4">
-            <p className="text-sm text-mist font-serif">No director script found for this dream yet.</p>
-            <button
-              onClick={handleReDirect}
-              className="px-4 py-2 rounded-xl bg-lantern text-void font-semibold text-xs shadow-lantern"
-            >
-              Direct Dream Now
-            </button>
-          </div>
+            {/* How this was made */}
+            <section className="rounded-xl border border-hairline/60 bg-surface/70 p-4 text-sm text-mist space-y-1">
+              <p className="flex items-center gap-2 text-cloud">
+                <Sparkles className="w-4 h-4 text-accent" /> How this film was made
+              </p>
+              <p>
+                Direction:{" "}
+                {director === "llm"
+                  ? "every scene art-directed by the AI from your words."
+                  : director === "mixed"
+                  ? "some scenes art-directed by the AI; the rest built directly from your words."
+                  : "built directly from your words (the AI director was unavailable)."}
+              </p>
+              <p>
+                Backdrops:{" "}
+                {imageProvider === "procedural"
+                  ? "hand-drawn ink generated on this server. Add an image provider for painted backdrops."
+                  : `painted with ${imageProvider}.`}{" "}
+                Characters are always drawn as ink figures from how you described them, so they look the same in every dream.
+              </p>
+            </section>
+          </>
         )}
       </main>
     </div>

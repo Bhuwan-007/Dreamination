@@ -7,7 +7,7 @@ celery_app = Celery(
     "dream_worker",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["src.tasks.sample"],
+    include=["src.tasks.sample", "src.tasks.render"],
 )
 
 celery_app.conf.update(

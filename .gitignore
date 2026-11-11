@@ -94,3 +94,12 @@ logs/
 
 # Verification Reports
 *VERIFICATION_REPORT.md
+
+# Local render storage (raw dream audio, TTS, ambient beds, skyboxes, manifests)
+data/
+
+# Dream player build copied into the web app (regenerate: npm --prefix packages/dream-player run build:web)
+apps/web/public/player/
+
+# Rigged avatars are fetched by scripts, never committed (see THIRD-PARTY-NOTICES.md)
+apps/web/public/avatars/*.glb

@@ -62,6 +62,8 @@ export default function JournalPage() {
         return `/dreams/${dream.id}/reflect`;
       case "interpreted":
       case "approved":
+      case "rendering":
+      case "rendered":
         return `/dreams/${dream.id}/theater`;
       default:
         return `/dreams/${dream.id}/review`;
@@ -76,6 +78,8 @@ export default function JournalPage() {
         return "Reflect";
       case "interpreted":
       case "approved":
+      case "rendering":
+      case "rendered":
         return "Watch";
       default:
         return "Continue";

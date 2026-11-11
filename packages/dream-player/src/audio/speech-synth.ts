@@ -5,20 +5,29 @@
 
 export class DreamSpeechSynthesizer {
   public isSpeaking = false;
-  public isMuted = false;
+  public isMuted = true;
   private audioEl: HTMLAudioElement | null = null;
 
   constructor() {
     if (typeof window !== "undefined") {
-      this.audioEl = new Audio("/audio/speech_spike.wav");
+      this.audioEl = new Audio();
       this.audioEl.preload = "auto";
     }
   }
 
-  public speak(line: string, onStart?: () => void, onEnd?: () => void) {
+  public speak(line: string, audioUrl?: string, onStart?: () => void, onEnd?: () => void) {
     if (this.isMuted) return;
 
-    if (this.audioEl) {
+    const isPlayerSubpath = typeof window !== "undefined" && window.location.pathname.includes("/player");
+    let targetUrl = audioUrl;
+
+    // Only fallback to speech_spike.wav if the line matches the spike audio file content
+    if (!targetUrl && line.toLowerCase().includes("tide is rising")) {
+      targetUrl = isPlayerSubpath ? "./audio/speech_spike.wav" : "/audio/speech_spike.wav";
+    }
+
+    if (targetUrl && this.audioEl) {
+      this.audioEl.src = targetUrl;
       this.audioEl.currentTime = 0;
       this.audioEl.volume = 0.95;
       this.audioEl
@@ -27,7 +36,8 @@ export class DreamSpeechSynthesizer {
           this.isSpeaking = true;
           if (onStart) onStart();
         })
-        .catch(() => {
+        .catch((err) => {
+          console.warn("Audio file playback blocked or failed, falling back to Web Speech:", err);
           this.fallbackSpeak(line, onStart, onEnd);
         });
 
@@ -38,6 +48,7 @@ export class DreamSpeechSynthesizer {
       return;
     }
 
+    // For any line without an explicit audio file (e.g. Scene 3 narration), speak dynamically via Web Speech:
     this.fallbackSpeak(line, onStart, onEnd);
   }
 

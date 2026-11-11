@@ -1,0 +1,70 @@
+:root {
+  color-scheme: dark;
+  --ink: #090d11;
+  --text: #ece3cb;
+  --gold: #e2b866;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--ink);
+  color: var(--text);
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  overflow: hidden;
+}
+#film-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#film-canvas { display: block; cursor: pointer; }
+#film-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: radial-gradient(circle at 50% 45%, #13202a 0%, var(--ink) 70%);
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+#film-status[hidden] { display: none; }
+.film-track { width: min(280px, 60vw); height: 3px; background: rgba(236, 227, 203, 0.15); border-radius: 2px; overflow: hidden; }
+#film-status-bar { height: 100%; width: 0; background: var(--gold); transition: width 0.25s ease; }
+#film-play {
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 1px solid rgba(226, 184, 102, 0.7);
+  background: rgba(9, 13, 17, 0.55);
+  color: var(--gold);
+  font-size: 28px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+#film-play:hover { background: rgba(226, 184, 102, 0.18); }
+#film-play:focus-visible, #film-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+#film-play[hidden] { display: none; }
+#film-controls {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+#film-controls[hidden] { display: none; }
+#film-toggle { background: var(--gold); color: var(--ink); border: 0; border-radius: 8px; width: 34px; height: 30px; cursor: pointer; }
+#film-scrub { flex: 1; accent-color: var(--gold); }
+@media (prefers-reduced-motion: reduce) { #film-status-bar { transition: none; } }

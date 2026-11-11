@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "tsx --test src/**/*.test.ts",
+    "build:web": "tsc && vite build --outDir ../../apps/web/public/player --emptyOutDir"
   },
   "dependencies": {
     "mp4-muxer": "^5.2.2",
@@ -15,6 +17,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.164.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.4.5",
     "vite": "^5.2.11"
   }

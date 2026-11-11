@@ -382,6 +382,75 @@ export class DreamApiClient {
       method: "POST",
     });
   }
+
+  // --- Dream film (2.5D living-ink) ---
+  async renderDream(dreamId: string, styleId = "ink_wash"): Promise<RenderJobState> {
+    return this.request(`/dreams/${dreamId}/render?style_id=${encodeURIComponent(styleId)}`, {
+      method: "POST",
+    });
+  }
+
+  async getRenderStatus(dreamId: string): Promise<RenderJobState> {
+    return this.request(`/dreams/${dreamId}/render/status`);
+  }
+
+  /** Throws ApiError(404) when the film has not been rendered yet. */
+  async getDreamManifest(dreamId: string): Promise<FilmManifestData> {
+    return this.request(`/dreams/${dreamId}/manifest`);
+  }
+}
+
+export interface RenderJobState {
+  dream_id: string;
+  status: "not_started" | "processing" | "completed" | "failed" | string;
+  stage?: string | null;
+  progress?: number;
+  error?: string | null;
+  manifest_ready?: boolean;
+  job_id?: string;
+}
+
+export interface FilmCastData {
+  castId: string;
+  name: string;
+  description: string;
+  visibility: "full" | "shadowed" | "hidden";
+  returning: boolean;
+  color?: string;
+  kind: string;
+  figureUrl: string;
+}
+
+export interface FilmSceneData {
+  index: number;
+  sceneId: number;
+  heading: string;
+  setting: string;
+  settingKind: string;
+  mood: string;
+  timeOfDay: string;
+  source: "llm" | "fallback";
+  startTime: number;
+  duration: number;
+  transitionIn: string;
+  camera: string;
+  layers: { depth: string; url: string; provider?: string }[];
+  objects: { name: string; depth: string; url: string }[];
+  characters: { castId: string; x: number }[];
+  speeches: { castId: string; text: string }[];
+  narration?: string | null;
+  effects: { type: string }[];
+}
+
+export interface FilmManifestData {
+  version: 2;
+  dreamId: string;
+  title: string;
+  totalDuration: number;
+  stale?: boolean;
+  provenance?: { director: string; imageProvider: string; images: Record<string, number> };
+  cast: FilmCastData[];
+  scenes: FilmSceneData[];
 }
 
 export interface DirectorBeatData {

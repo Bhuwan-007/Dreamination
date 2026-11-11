@@ -16,6 +16,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_user
@@ -563,7 +564,6 @@ async def get_interpretation(
     """
     Gets the existing interpretation for a dream, or returns null if not generated yet.
     """
-    from sqlalchemy import select
 
     repo = DreamRepository(db, current_user.id)
     dream = await repo.get_by_id(dream_id)
@@ -602,7 +602,6 @@ async def submit_interpretation_feedback(
     Stores user resonance feedback on reflection threads ('resonates' / 'felt_different')
     and prepares event for lexicon distribution updating.
     """
-    from sqlalchemy import select
 
     repo = DreamRepository(db, current_user.id)
     dream = await repo.get_by_id(dream_id)
@@ -666,7 +665,6 @@ async def generate_director_script_endpoint(
     Generates a validated DirectorScript for the approved dream story
     to be performed by the Three.js Dream Player.
     """
-    from sqlalchemy import select
 
     from ..models.entity import DreamEntityLink, Entity
     from ..stages.director import director_service
@@ -745,5 +743,3 @@ async def get_director_script_endpoint(
         current_user=current_user,
         db=db,
     )
-
-

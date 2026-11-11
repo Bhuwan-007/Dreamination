@@ -5,6 +5,7 @@ WORKDIR /workspace
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    espeak-ng \
     && rm -rf /var/lib/apt/lists/*
 
 # Install shared package dependencies
@@ -17,6 +18,10 @@ RUN pip install --no-cache-dir -r /workspace/apps/api/requirements.txt
 
 # Copy API application code
 COPY apps/api /workspace/apps/api
+
+# The render endpoint compiles scene manifests in-process using the worker's
+# pipeline modules (apps.worker.src.tasks.*), so ship them in this image too.
+COPY apps/worker /workspace/apps/worker
 
 ENV PYTHONPATH=/workspace:/workspace/apps/api
 

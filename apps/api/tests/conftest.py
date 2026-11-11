@@ -3,7 +3,13 @@ Pytest configuration and async test database fixtures.
 Uses an in-memory SQLite database via aiosqlite with StaticPool for fast, isolated test runs.
 """
 
+import os
+import tempfile
 from collections.abc import AsyncGenerator
+
+# Keep test renders out of the developer's real data/storage. Must be set before the
+# app (and the worker modules it imports) compute their storage paths.
+os.environ.setdefault("DREAM_STORAGE_DIR", tempfile.mkdtemp(prefix="dream_storage_"))
 
 import pytest
 from apps.api.src.database import get_db

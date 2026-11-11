@@ -1,12 +1,15 @@
 from contextlib import asynccontextmanager
 
+from apps.worker.src.tasks.storage_paths import storage_root
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .logging import SafeRequestLoggingMiddleware, logger, setup_logging
 from .routes.auth import router as auth_router
 from .routes.dreams import router as dreams_router
+from .routes.film import router as film_router
 from .routes.health import router as health_router
 from .routes.insights import router as insights_router
 from .routes.lexicon import router as lexicon_router
@@ -56,8 +59,23 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router)
     app.include_router(dreams_router)
+    app.include_router(film_router)
     app.include_router(lexicon_router, prefix="/lexicon", tags=["lexicon"])
     app.include_router(insights_router, prefix="/insights", tags=["insights"])
+
+    # Serve only rendered, content-hashed player assets publicly. Raw dream audio
+    # (data/storage/audio) and scene manifests (which contain dream text) must never
+    # be exposed here; manifests are served through the authenticated
+    # GET /dreams/{id}/manifest endpoint instead.
+    storage_path = storage_root()
+    for public_dir in ("tts", "ambient", "skyboxes", "film"):
+        asset_dir = storage_path / public_dir
+        asset_dir.mkdir(parents=True, exist_ok=True)
+        app.mount(
+            f"/storage/{public_dir}",
+            StaticFiles(directory=str(asset_dir)),
+            name=f"storage_{public_dir}",
+        )
 
     return app
 

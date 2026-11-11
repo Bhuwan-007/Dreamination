@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dream Film</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;1,300;1,400&family=Instrument+Sans:wght@400;600&family=Newsreader:ital,wght@0,400;1,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main id="film-stage">
+      <canvas id="film-canvas" aria-label="Dream film"></canvas>
+      <div id="film-status" role="status" aria-live="polite">
+        <span id="film-status-text">Waiting for your dream…</span>
+        <div class="film-track"><div id="film-status-bar"></div></div>
+      </div>
+      <button id="film-play" type="button" aria-label="Play film" hidden>▶</button>
+      <div id="film-controls" hidden>
+        <button id="film-toggle" type="button" aria-label="Play or pause">▶</button>
+        <input id="film-scrub" type="range" min="0" max="1" step="0.05" value="0" aria-label="Seek" />
+        <span id="film-time">0:00 / 0:00</span>
+      </div>
+    </main>
+    <script type="module" src="/src/film/film-main.ts"></script>
+  </body>
+</html>

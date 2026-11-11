@@ -8,9 +8,14 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
+from apps.worker.src.tasks.storage_paths import storage_root
+
 from .logging import logger
 
-LOCAL_STORAGE_DIR = Path("data/storage/audio")
+LOCAL_STORAGE_BASE = storage_root()
+LOCAL_STORAGE_DIR = LOCAL_STORAGE_BASE / "audio"
+LOCAL_STORAGE_BASE.mkdir(parents=True, exist_ok=True)
+LOCAL_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class StorageService:
@@ -18,7 +23,9 @@ class StorageService:
 
     def __init__(self, base_dir: Path | None = None) -> None:
         self.base_dir = base_dir or LOCAL_STORAGE_DIR
+        self.root_storage = LOCAL_STORAGE_BASE
         self.base_dir.mkdir(parents=True, exist_ok=True)
+        self.root_storage.mkdir(parents=True, exist_ok=True)
 
     def save_audio(self, audio_bytes: bytes, original_filename: str = "dream.webm") -> str:
         """Saves raw audio file and returns a unique storage key."""
@@ -34,13 +41,28 @@ class StorageService:
 
     def get_audio(self, storage_key: str) -> bytes | None:
         """Retrieves raw audio bytes by storage key."""
-        # Sanitize path to prevent directory traversal
         clean_key = Path(storage_key).name
         target_path = self.base_dir / clean_key
 
         if not target_path.exists():
             return None
 
+        with open(target_path, "rb") as f:
+            return f.read()
+
+    def save_file(self, relative_path: str, data: bytes) -> str:
+        """Saves a generic asset to data/storage/<relative_path>."""
+        target_path = self.root_storage / relative_path
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(target_path, "wb") as f:
+            f.write(data)
+        return f"/storage/{relative_path}"
+
+    def get_file(self, relative_path: str) -> bytes | None:
+        """Reads a generic asset from data/storage/<relative_path>."""
+        target_path = self.root_storage / relative_path
+        if not target_path.exists():
+            return None
         with open(target_path, "rb") as f:
             return f.read()
 

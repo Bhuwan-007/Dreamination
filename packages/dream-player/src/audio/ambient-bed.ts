@@ -1,22 +1,28 @@
 /**
- * Web Audio Ambient Soundscape & Sound Motifs
- * Synthesizes drones, wind, and clock ticking without any external audio files
+ * Web Audio Ambient Soundscape & Sound Motifs.
+ * Synthesizes drones, wind beds, sub-bass, and sound motifs without external audio files.
+ * Supports automated speech ducking and ambient presets.
  */
 
 export class DreamAudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private ambientGain: GainNode | null = null;
   private droneGain: GainNode | null = null;
   private windGain: GainNode | null = null;
+  private filterNode: BiquadFilterNode | null = null;
   private osc1: OscillatorNode | null = null;
   private osc2: OscillatorNode | null = null;
   private isInitialized = false;
 
+  public isMuted = true;
+  private isDucking = false;
+  private currentPreset = "forest_whisper";
   private isTickingActive = false;
   private lastTickTime = 0;
 
   constructor() {
-    // Initialized lazily upon first user interaction to comply with browser autoplay policies
+    this.isMuted = true;
   }
 
   public init() {
@@ -25,9 +31,14 @@ export class DreamAudioEngine {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       this.ctx = new AudioCtx();
+
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0.0 : 0.18, this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
+
+      this.ambientGain = this.ctx.createGain();
+      this.ambientGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+      this.ambientGain.connect(this.masterGain);
 
       this.startDrone();
       this.startWind();
@@ -38,35 +49,34 @@ export class DreamAudioEngine {
   }
 
   private startDrone() {
-    if (!this.ctx || !this.masterGain) return;
+    if (!this.ctx || !this.ambientGain) return;
 
     this.droneGain = this.ctx.createGain();
-    this.droneGain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+    this.droneGain.gain.setValueAtTime(0.04, this.ctx.currentTime);
 
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(140, this.ctx.currentTime);
+    this.filterNode = this.ctx.createBiquadFilter();
+    this.filterNode.type = "lowpass";
+    this.filterNode.frequency.setValueAtTime(75, this.ctx.currentTime);
 
-    // Two detuned low triangle oscillators (dreamy drone)
     this.osc1 = this.ctx.createOscillator();
-    this.osc1.type = "triangle";
-    this.osc1.frequency.setValueAtTime(55, this.ctx.currentTime); // A1
+    this.osc1.type = "sine";
+    this.osc1.frequency.setValueAtTime(55.0, this.ctx.currentTime); // A1
 
     this.osc2 = this.ctx.createOscillator();
-    this.osc2.type = "triangle";
-    this.osc2.frequency.setValueAtTime(55.6, this.ctx.currentTime); // subtle binaural beat
+    this.osc2.type = "sine";
+    this.osc2.frequency.setValueAtTime(82.4, this.ctx.currentTime); // E2 soft harmonic fifth
 
-    this.osc1.connect(filter);
-    this.osc2.connect(filter);
-    filter.connect(this.droneGain);
-    this.droneGain.connect(this.masterGain);
+    this.osc1.connect(this.filterNode);
+    this.osc2.connect(this.filterNode);
+    this.filterNode.connect(this.droneGain);
+    this.droneGain.connect(this.ambientGain);
 
     this.osc1.start();
     this.osc2.start();
   }
 
   private startWind() {
-    if (!this.ctx || !this.masterGain) return;
+    if (!this.ctx || !this.ambientGain) return;
 
     const bufferSize = this.ctx.sampleRate * 2;
     const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -81,49 +91,100 @@ export class DreamAudioEngine {
 
     const bandpass = this.ctx.createBiquadFilter();
     bandpass.type = "bandpass";
-    bandpass.frequency.setValueAtTime(450, this.ctx.currentTime);
-    bandpass.Q.setValueAtTime(1.5, this.ctx.currentTime);
+    bandpass.frequency.setValueAtTime(320, this.ctx.currentTime);
+    bandpass.Q.setValueAtTime(0.8, this.ctx.currentTime);
 
     this.windGain = this.ctx.createGain();
-    this.windGain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+    this.windGain.gain.setValueAtTime(0.015, this.ctx.currentTime);
 
     whiteNoise.connect(bandpass);
     bandpass.connect(this.windGain);
-    this.windGain.connect(this.masterGain);
+    this.windGain.connect(this.ambientGain);
 
     whiteNoise.start();
+  }
+
+  public setAmbientPreset(preset: string) {
+    if (!this.ctx || !this.filterNode || this.currentPreset === preset) return;
+    this.currentPreset = preset;
+    const now = this.ctx.currentTime;
+
+    switch (preset) {
+      case "underwater_hum":
+        this.filterNode.frequency.exponentialRampToValueAtTime(80, now + 1.2);
+        if (this.droneGain) this.droneGain.gain.setValueAtTime(0.28, now);
+        if (this.windGain) this.windGain.gain.setValueAtTime(0.02, now);
+        break;
+      case "wind_howl":
+        this.filterNode.frequency.exponentialRampToValueAtTime(320, now + 1.2);
+        if (this.windGain) this.windGain.gain.setValueAtTime(0.12, now);
+        break;
+      case "void_resonance":
+        this.filterNode.frequency.exponentialRampToValueAtTime(65, now + 1.2);
+        if (this.osc1) this.osc1.frequency.setValueAtTime(43.6, now); // F0
+        break;
+      case "institutional_drone":
+        this.filterNode.frequency.exponentialRampToValueAtTime(120, now + 1.2);
+        if (this.osc1) this.osc1.frequency.setValueAtTime(60, now); // 60Hz hum
+        break;
+      default: // forest_whisper
+        this.filterNode.frequency.exponentialRampToValueAtTime(160, now + 1.2);
+        if (this.droneGain) this.droneGain.gain.setValueAtTime(0.16, now);
+        if (this.windGain) this.windGain.gain.setValueAtTime(0.05, now);
+        break;
+    }
+  }
+
+  public setSpeechDucking(active: boolean) {
+    if (!this.ctx || !this.ambientGain || this.isDucking === active) return;
+    this.isDucking = active;
+    const now = this.ctx.currentTime;
+    const targetGain = active ? 0.45 : 1.0; // -7 dB ducking
+    this.ambientGain.gain.linearRampToValueAtTime(targetGain, now + 0.35);
   }
 
   public setTicking(active: boolean) {
     this.isTickingActive = active;
   }
 
-  public playTickCue() {
-    if (!this.ctx || !this.masterGain) return;
+  public setMotif(motif: string | null) {
+    this.isTickingActive = motif === "ticking";
+  }
 
-    // Short wooden/clock tick chirp
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = "sine";
+  public playMotifCue(motif: string) {
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
     const now = this.ctx.currentTime;
-    osc.frequency.setValueAtTime(1200, now);
-    osc.frequency.exponentialRampToValueAtTime(320, now + 0.025);
 
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(now);
-    osc.stop(now + 0.04);
+    if (motif === "ticking") {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.025);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } else if (motif === "bell_chime") {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, now); // A5
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + 1.9);
+    }
   }
 
   public update(timeSeconds: number) {
-    if (this.isTickingActive && this.ctx) {
+    if (this.isTickingActive && this.ctx && !this.isMuted) {
       if (timeSeconds - this.lastTickTime >= 1.0) {
-        this.playTickCue();
+        this.playMotifCue("ticking");
         this.lastTickTime = timeSeconds;
       }
     }
@@ -132,8 +193,6 @@ export class DreamAudioEngine {
   public getAudioContext(): AudioContext | null {
     return this.ctx;
   }
-
-  public isMuted = false;
 
   public toggleMute(): boolean {
     this.init();
@@ -152,54 +211,39 @@ export class DreamAudioEngine {
     }
   }
 
-  /**
-   * Deterministically render the entire dream audio track offline into an AudioBuffer.
-   * This is used by the MP4 video exporter so exported films have full sound.
-   */
   public static async renderOfflineSoundscape(durationSeconds: number): Promise<AudioBuffer> {
-    const sampleRate = 44100;
-    const OfflineCtxClass = window.OfflineAudioContext || (window as any).webkitOfflineAudioContext;
-    if (!OfflineCtxClass) {
-      throw new Error("OfflineAudioContext not supported in this browser");
-    }
+    const sampleRate = 48000;
+    const length = Math.ceil(durationSeconds * sampleRate);
+    const OfflineCtxClass =
+      window.OfflineAudioContext || (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext;
+    const offlineCtx = new OfflineCtxClass(2, Math.max(1, length), sampleRate);
 
-    const offlineCtx = new OfflineCtxClass(2, Math.ceil(sampleRate * durationSeconds), sampleRate);
-
-    const masterGain = offlineCtx.createGain();
-    masterGain.gain.setValueAtTime(0.35, 0);
-    masterGain.connect(offlineCtx.destination);
-
-    // 1. Ambient low resonant drone
+    // Drone
     const droneGain = offlineCtx.createGain();
-    droneGain.gain.setValueAtTime(0.18, 0);
+    droneGain.gain.setValueAtTime(0.2, 0);
 
-    const filter = offlineCtx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(140, 0);
+    const filterNode = offlineCtx.createBiquadFilter();
+    filterNode.type = "lowpass";
+    filterNode.frequency.setValueAtTime(140, 0);
 
     const osc1 = offlineCtx.createOscillator();
     osc1.type = "triangle";
-    osc1.frequency.setValueAtTime(55, 0); // A1
+    osc1.frequency.setValueAtTime(55, 0);
 
     const osc2 = offlineCtx.createOscillator();
     osc2.type = "triangle";
-    osc2.frequency.setValueAtTime(55.6, 0); // subtle binaural beat
+    osc2.frequency.setValueAtTime(55.6, 0);
 
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(droneGain);
-    droneGain.connect(masterGain);
+    osc1.connect(filterNode);
+    osc2.connect(filterNode);
+    filterNode.connect(droneGain);
+    droneGain.connect(offlineCtx.destination);
 
-    osc1.start(0);
-    osc2.start(0);
-    osc1.stop(durationSeconds);
-    osc2.stop(durationSeconds);
-
-    // 2. Wind noise
-    const bufferSize = sampleRate * 2;
-    const noiseBuffer = offlineCtx.createBuffer(1, bufferSize, sampleRate);
+    // Wind
+    const noiseBufferSize = sampleRate * 2;
+    const noiseBuffer = offlineCtx.createBuffer(1, noiseBufferSize, sampleRate);
     const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
+    for (let i = 0; i < noiseBufferSize; i++) {
       output[i] = Math.random() * 2 - 1;
     }
 
@@ -217,52 +261,12 @@ export class DreamAudioEngine {
 
     whiteNoise.connect(bandpass);
     bandpass.connect(windGain);
-    windGain.connect(masterGain);
+    windGain.connect(offlineCtx.destination);
 
+    osc1.start(0);
+    osc2.start(0);
     whiteNoise.start(0);
-    whiteNoise.stop(durationSeconds);
-
-    // 3. Clock ticking cues during Scene 2 & Scene 3 (12.0s to 32.0s)
-    for (let t = 12.0; t < 32.0; t += 1.0) {
-      if (t + 0.05 > durationSeconds) break;
-      const tickOsc = offlineCtx.createOscillator();
-      const tickGain = offlineCtx.createGain();
-
-      tickOsc.type = "sine";
-      tickOsc.frequency.setValueAtTime(1200, t);
-      tickOsc.frequency.exponentialRampToValueAtTime(320, t + 0.025);
-
-      tickGain.gain.setValueAtTime(0.15, t);
-      tickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
-
-      tickOsc.connect(tickGain);
-      tickGain.connect(masterGain);
-
-      tickOsc.start(t);
-      tickOsc.stop(t + 0.04);
-    }
-
-    // 4. Spoken voice track at t = 14.6s ("The tide is rising, but none of the clocks have hands.")
-    try {
-      const resp = await fetch("/audio/speech_spike.wav");
-      if (resp.ok) {
-        const arrayBuf = await resp.arrayBuffer();
-        const speechAudioBuf = await offlineCtx.decodeAudioData(arrayBuf);
-        const speechSource = offlineCtx.createBufferSource();
-        speechSource.buffer = speechAudioBuf;
-
-        const speechGain = offlineCtx.createGain();
-        speechGain.gain.setValueAtTime(0.9, 14.6);
-        speechSource.connect(speechGain);
-        speechGain.connect(masterGain);
-
-        speechSource.start(14.6);
-      }
-    } catch (e) {
-      console.warn("Could not load /audio/speech_spike.wav for offline render:", e);
-    }
 
     return await offlineCtx.startRendering();
   }
 }
-

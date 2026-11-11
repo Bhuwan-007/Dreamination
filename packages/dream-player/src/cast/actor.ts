@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { PrimitivePuppet } from "./puppet";
-import { LipSyncDriver } from "./lipsync";
+import { LipSyncDriver, WordTiming } from "./lipsync";
+import { FaceVisibility, AllowedEmotion, AnimateClip } from "../types/director";
 
 export class DreamActor {
   public puppet: PrimitivePuppet;
@@ -22,7 +23,8 @@ export class DreamActor {
   private walkStartTime = 0;
   private walkDuration = 1.0;
 
-  private currentAction = "idle";
+  private currentAction: AnimateClip | "walk" = "idle";
+  private currentSpeedMultiplier = 1.0;
 
   constructor() {
     this.puppet = new PrimitivePuppet();
@@ -36,106 +38,101 @@ export class DreamActor {
   private loadRiggedAvatar() {
     const loader = new GLTFLoader();
 
-    // 1. Load the realistic Human Avatar (with eyes, face, hair, clothing, shoes)
-    loader.load(
-      "/avatars/human_traveler.glb",
-      (gltf) => {
-        this.gltfModel = gltf.scene;
-        this.gltfModel.scale.set(1.0, 1.0, 1.0);
+    const isPlayerSubpath = typeof window !== "undefined" && window.location.pathname.includes("/player");
+    const humanUrl = isPlayerSubpath ? "./avatars/human_traveler.glb" : "/avatars/human_traveler.glb";
+    const animUrl = isPlayerSubpath ? "./avatars/traveler.glb" : "/avatars/traveler.glb";
 
-        // Enable shadow casting & reception on all human meshes
-        this.gltfModel.traverse((child) => {
+    loader.load(
+      humanUrl,
+      (humanGltf) => {
+        const model = humanGltf.scene as THREE.Group;
+        this.gltfModel = model;
+        model.scale.set(1.0, 1.0, 1.0);
+
+        model.traverse((child: THREE.Object3D) => {
           if ((child as THREE.SkinnedMesh).isSkinnedMesh || (child as THREE.Mesh).isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
           }
         });
 
-        this.mixer = new THREE.AnimationMixer(this.gltfModel);
+        this.mixer = new THREE.AnimationMixer(model);
 
-        // Map rest quaternions for all bones in the human avatar to preserve anatomical bind pose
-        const restMap = new Map<string, THREE.Quaternion>();
-        this.gltfModel.traverse((obj) => {
-          if ((obj as THREE.Bone).isBone || obj.type === "Bone" || obj.isObject3D) {
-            restMap.set(obj.name, obj.quaternion.clone());
+        // Store initial bind rest rotations of ReadyPlayerMe bones
+        const restRotations = new Map<string, THREE.Quaternion>();
+        model.traverse((obj) => {
+          if ((obj as THREE.Bone).isBone) {
+            restRotations.set(obj.name, obj.quaternion.clone());
           }
         });
 
-        // 2. Load animations from traveler.glb and retarget to the human skeleton
         loader.load(
-          "/avatars/traveler.glb",
+          animUrl,
           (animGltf) => {
             for (const clip of animGltf.animations) {
               const retargetedTracks: THREE.KeyframeTrack[] = [];
               for (const track of clip.tracks) {
-                // Strip mixamorig: prefix so tracks bind directly to Hips, LeftUpLeg, etc.
                 const cleanName = track.name.replace(/^mixamorig:?/g, "");
+                const parts = cleanName.split(".");
+                const boneName = parts[0];
+                const property = parts[1];
+                const targetTrackName = `${boneName}.${property}`;
 
-                // Position tracks: Mixamo exports in centimeters (e.g. Hips = 103cm).
-                // Scale Hips.position by 0.01 to match meter scale, and discard child bone
-                // position tracks so anatomical limb proportions are preserved.
-                if (cleanName.endsWith(".position")) {
-                  if (cleanName.startsWith("Hips.")) {
-                    const clonedTrack = track.clone();
-                    clonedTrack.name = cleanName;
-                    for (let i = 0; i < clonedTrack.values.length; i++) {
-                      clonedTrack.values[i] *= 0.01;
-                    }
-                    retargetedTracks.push(clonedTrack);
+                if (property === "position" && boneName === "Hips") {
+                  const cloned = track.clone();
+                  cloned.name = targetTrackName;
+                  for (let i = 0; i < cloned.values.length; i++) {
+                    cloned.values[i] *= 0.01;
                   }
-                } else if (cleanName.endsWith(".quaternion")) {
-                  const boneName = cleanName.split(".")[0];
-                  const restQ = restMap.get(boneName) || new THREE.Quaternion(0, 0, 0, 1);
-                  const clonedTrack = track.clone();
-                  clonedTrack.name = cleanName;
+                  retargetedTracks.push(cloned);
+                } else if (property === "quaternion") {
+                  const restQ = restRotations.get(boneName) || new THREE.Quaternion(0, 0, 0, 1);
+                  const cloned = track.clone();
+                  cloned.name = targetTrackName;
 
-                  // Retarget animation rotation relative to each bone's bind pose orientation
-                  for (let i = 0; i < clonedTrack.values.length; i += 4) {
+                  for (let i = 0; i < cloned.values.length; i += 4) {
                     const qAnim = new THREE.Quaternion(
-                      clonedTrack.values[i],
-                      clonedTrack.values[i + 1],
-                      clonedTrack.values[i + 2],
-                      clonedTrack.values[i + 3]
+                      cloned.values[i],
+                      cloned.values[i + 1],
+                      cloned.values[i + 2],
+                      cloned.values[i + 3]
                     );
-                    const qFinal = qAnim.multiply(restQ);
-                    clonedTrack.values[i] = qFinal.x;
-                    clonedTrack.values[i + 1] = qFinal.y;
-                    clonedTrack.values[i + 2] = qFinal.z;
-                    clonedTrack.values[i + 3] = qFinal.w;
+                    const qFinal = restQ.clone().multiply(qAnim);
+                    cloned.values[i] = qFinal.x;
+                    cloned.values[i + 1] = qFinal.y;
+                    cloned.values[i + 2] = qFinal.z;
+                    cloned.values[i + 3] = qFinal.w;
                   }
-
-                  retargetedTracks.push(clonedTrack);
+                  retargetedTracks.push(cloned);
                 }
               }
 
-              const retargetedClip = new THREE.AnimationClip(clip.name, clip.duration, retargetedTracks);
-              const action = this.mixer!.clipAction(retargetedClip);
-              this.actions.set(clip.name, action);
+              const newClip = new THREE.AnimationClip(clip.name, clip.duration, retargetedTracks);
+              this.actions.set(clip.name, this.mixer!.clipAction(newClip));
             }
 
-            // Sync with active action state
             if (this.currentAction === "walk") {
               this.playGltfAction("walk", 0.15);
             } else {
               this.playGltfAction("idle", 0.15);
             }
 
-            // Replace procedural puppet with textured human avatar once animation is ready
             this.puppet.group.visible = false;
-            this.group.add(this.gltfModel!);
+            this.group.add(model);
             this.isGltfLoaded = true;
-            console.log("Human avatar with skeletal animations ready and active in scene!");
           },
           undefined,
-          (animErr) => {
-            console.warn("Could not load animation clips; staying with procedural puppet:", animErr);
+          (err) => {
+            console.warn("Failed loading animation clips for human avatar:", err);
             this.puppet.group.visible = true;
           }
         );
       },
       undefined,
       (err) => {
-        console.warn("Falling back to procedural human puppet:", err);
+        console.warn("Could not load human_traveler.glb, falling back to puppet:", err);
+        this.puppet.group.visible = true;
+        this.isGltfLoaded = false;
       }
     );
   }
@@ -145,12 +142,30 @@ export class DreamActor {
     const targetAction = this.actions.get(name);
     if (!targetAction) return;
 
-    if (this.activeAction && this.activeAction !== targetAction) {
+    if (this.activeAction === targetAction) return;
+
+    if (this.activeAction) {
       this.activeAction.fadeOut(duration);
     }
 
     targetAction.reset().fadeIn(duration).play();
     this.activeAction = targetAction;
+  }
+
+  public setFaceVisibility(visibility: FaceVisibility) {
+    this.puppet.setFaceVisibility(visibility);
+  }
+
+  public setEmotion(emotion: AllowedEmotion) {
+    this.puppet.setEmotion(emotion);
+  }
+
+  public setLookAt(target: THREE.Vector3) {
+    this.puppet.setLookAt(target);
+    if (this.gltfModel) {
+      // Look at with model
+      this.group.lookAt(target.x, this.group.position.y, target.z);
+    }
   }
 
   public teleport(position: THREE.Vector3, lookAt?: THREE.Vector3) {
@@ -159,37 +174,58 @@ export class DreamActor {
       this.group.lookAt(lookAt.x, this.group.position.y, lookAt.z);
     }
     this.isWalking = false;
+    this.walkStartPos.copy(position);
+    this.walkTargetPos.copy(position);
   }
 
-  public walkTo(targetPos: THREE.Vector3, startTime: number, duration: number) {
+  public walkTo(targetPos: THREE.Vector3, startTime: number, duration: number, isRunning = false) {
+    if (
+      this.isWalking &&
+      this.walkTargetPos.distanceToSquared(targetPos) < 0.001 &&
+      Math.abs(this.walkStartTime - startTime) < 0.001
+    ) {
+      return;
+    }
+
     this.walkStartPos.copy(this.group.position);
     this.walkTargetPos.copy(targetPos);
     this.walkStartTime = startTime;
     this.walkDuration = Math.max(0.1, duration);
     this.isWalking = true;
     this.currentAction = "walk";
+    this.currentSpeedMultiplier = isRunning ? 1.7 : 1.0;
 
     this.group.lookAt(targetPos.x, this.group.position.y, targetPos.z);
     if (this.isGltfLoaded) {
-      this.playGltfAction("walk", 0.25);
+      const animName = isRunning && this.actions.has("run") ? "run" : "walk";
+      this.playGltfAction(animName, 0.25);
     }
   }
 
-  public playAction(action: string, _startTime: number, _duration: number) {
-    if (this.currentAction === action && this.activeAction?.isRunning()) return;
+  public playAction(action: AnimateClip | "walk", _startTime = 0, _duration = 1.0) {
+    if (this.currentAction === action && !this.isWalking) {
+      return;
+    }
+
     this.currentAction = action;
-    this.isWalking = false;
+    this.isWalking = action === "walk";
 
     if (this.isGltfLoaded) {
       switch (action) {
         case "walk":
-          this.playGltfAction("walk", 0.25);
+          this.playGltfAction(this.actions.has("walk") ? "walk" : "idle", 0.25);
           break;
         case "look_around":
+        case "wave":
           this.playGltfAction(this.actions.has("agree") ? "agree" : "idle", 0.3);
           break;
         case "reach":
+        case "point":
           this.playGltfAction(this.actions.has("sad_pose") ? "sad_pose" : "idle", 0.3);
+          break;
+        case "think":
+        case "shrug":
+          this.playGltfAction(this.actions.has("headShake") ? "headShake" : "idle", 0.3);
           break;
         case "idle":
         default:
@@ -199,8 +235,8 @@ export class DreamActor {
     }
   }
 
-  public speak(line: string, startTime: number, duration: number) {
-    this.lipsync.setScript(line, startTime, duration);
+  public speak(line: string, startTime: number, duration: number, wordTimings?: WordTiming[]) {
+    this.lipsync.setScript(line, startTime, duration, wordTimings);
   }
 
   public update(timeSeconds: number) {
@@ -220,7 +256,7 @@ export class DreamActor {
       this.group.position.lerpVectors(this.walkStartPos, this.walkTargetPos, smoothT);
 
       if (!this.isGltfLoaded) {
-        this.puppet.applyWalkCycle(timeSeconds, 1.0);
+        this.puppet.applyWalkCycle(timeSeconds, this.currentSpeedMultiplier);
       }
 
       if (progress >= 1.0) {
@@ -228,16 +264,34 @@ export class DreamActor {
         this.playAction("idle", timeSeconds, 1.0);
       }
     } else if (!this.isGltfLoaded) {
-      // Procedural gestures
+      // Procedural gestures on PrimitivePuppet
       switch (this.currentAction) {
         case "walk":
-          this.puppet.applyWalkCycle(timeSeconds, 1.0);
+          this.puppet.applyWalkCycle(timeSeconds, this.currentSpeedMultiplier);
+          break;
+        case "wave":
+          this.puppet.applyWave(timeSeconds);
+          break;
+        case "point":
+          this.puppet.applyPoint(timeSeconds);
+          break;
+        case "shrug":
+          this.puppet.applyShrug(timeSeconds);
           break;
         case "look_around":
           this.puppet.applyLookAround(timeSeconds);
           break;
         case "reach":
           this.puppet.applyReach(timeSeconds);
+          break;
+        case "think":
+          this.puppet.applyThink(timeSeconds);
+          break;
+        case "sit":
+          this.puppet.applySit();
+          break;
+        case "fall":
+          this.puppet.applyFall(1.0);
           break;
         case "idle":
         default:
@@ -248,44 +302,12 @@ export class DreamActor {
 
     // Lip-sync update
     const { mouthOpen, shape } = this.lipsync.update(timeSeconds);
-    this.puppet.updateLipSync(mouthOpen, shape);
-
-    // 3. Human Facial Blendshapes / Visemes for Lip Sync
-    if (this.isGltfLoaded && this.gltfModel) {
-      const headMesh = this.gltfModel.getObjectByName("Wolf3D_Head") as THREE.SkinnedMesh;
-      const teethMesh = this.gltfModel.getObjectByName("Wolf3D_Teeth") as THREE.SkinnedMesh;
-      const activeViseme = `viseme_${shape}`;
-
-      if (headMesh?.morphTargetDictionary && headMesh.morphTargetInfluences) {
-        const dict = headMesh.morphTargetDictionary;
-        const influences = headMesh.morphTargetInfluences;
-        for (const [key, idx] of Object.entries(dict)) {
-          if (key.startsWith("viseme_")) {
-            const targetWeight = key === activeViseme ? mouthOpen * 0.95 : 0.0;
-            influences[idx] = THREE.MathUtils.lerp(influences[idx], targetWeight, 0.4);
-          }
-        }
-      }
-
-      if (teethMesh?.morphTargetDictionary && teethMesh.morphTargetInfluences) {
-        const dict = teethMesh.morphTargetDictionary;
-        const influences = teethMesh.morphTargetInfluences;
-        for (const [key, idx] of Object.entries(dict)) {
-          if (key.startsWith("viseme_")) {
-            const targetWeight = key === activeViseme ? mouthOpen * 0.95 : 0.0;
-            influences[idx] = THREE.MathUtils.lerp(influences[idx], targetWeight, 0.4);
-          }
-        }
-      }
-
-      // Natural arm drape relaxation (bringing hands down beside hips instead of T-pose)
-      const leftArm = this.gltfModel.getObjectByName("LeftArm");
-      const rightArm = this.gltfModel.getObjectByName("RightArm");
-      if (leftArm && rightArm) {
-        if (this.currentAction === "idle" || this.currentAction === "walk") {
-          leftArm.rotation.z = THREE.MathUtils.lerp(leftArm.rotation.z, -1.05, 0.1);
-          rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, 1.05, 0.1);
-        }
+    if (!this.isGltfLoaded) {
+      this.puppet.setMouthOpen(mouthOpen, shape);
+    } else if (this.gltfModel && mouthOpen > 0.05) {
+      const head = this.gltfModel.getObjectByName("mixamorig:Head");
+      if (head) {
+        head.rotation.x = Math.sin(timeSeconds * 6.0) * 0.04 * mouthOpen;
       }
     }
   }

@@ -3,15 +3,18 @@ import { NOCTURNE_STYLE } from "./config-loader";
 import { DreamTerrain } from "./world/terrain";
 import { DreamSky } from "./world/sky";
 import { DreamProps } from "./world/props";
-import { DreamFloodEffect } from "./world/effects/flood";
+import { DreamEffectsManager } from "./world/effects/effects-manager";
+import { DreamWeatherSystem } from "./world/weather";
 import { DreamActor } from "./cast/actor";
 import { DirectorCamera } from "./camera/director-camera";
 import { DreamAudioEngine } from "./audio/ambient-bed";
 import { DreamSpeechSynthesizer } from "./audio/speech-synth";
 import { VideoExporter } from "./export/video-exporter";
+import { TimelineEngine, SceneManifest } from "./timeline";
+import { DirectorScript, AllowedEmotion, AnimateClip } from "./types/director";
 import spikeScript from "../../../samples/spike.director.json";
 
-class DreamPlayer {
+export class DreamPlayer {
   private canvas: HTMLCanvasElement;
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
@@ -20,16 +23,19 @@ class DreamPlayer {
   private terrain: DreamTerrain;
   private sky: DreamSky;
   private props: DreamProps;
-  private flood: DreamFloodEffect;
+  private effects: DreamEffectsManager;
+  private weather: DreamWeatherSystem;
   private actor: DreamActor;
   private audio: DreamAudioEngine;
   private speech: DreamSpeechSynthesizer;
 
   // Timeline state
+  private manifest: SceneManifest;
   private isPlaying = false;
   private currentTime = 0.0;
-  private totalDuration = 38.0;
   private lastRafTime = 0;
+  private currentSceneIndex = -1;
+  private lastPlayedSpeechKey = "";
 
   // Performance HUD
   private frameCount = 0;
@@ -50,15 +56,13 @@ class DreamPlayer {
   private exportPercentEl: HTMLElement | null;
   private progressFillEl: HTMLElement | null;
 
-  private speechTriggered = false;
-
   constructor() {
     this.canvas = document.getElementById("dream-canvas") as HTMLCanvasElement;
     this.fpsValEl = document.getElementById("fps-val");
     this.shotValEl = document.getElementById("shot-val");
     this.sceneValEl = document.getElementById("scene-val");
     this.captionEl = document.getElementById("caption-text");
-    console.log(`Loaded director script: "${spikeScript.title}" (${spikeScript.scenes.length} scenes)`);
+
     this.playBtn = document.getElementById("play-pause-btn") as HTMLButtonElement;
     this.soundBtn = document.getElementById("sound-btn") as HTMLButtonElement;
     this.timeSlider = document.getElementById("time-slider") as HTMLInputElement;
@@ -69,7 +73,11 @@ class DreamPlayer {
     this.exportPercentEl = document.getElementById("export-percent");
     this.progressFillEl = document.getElementById("progress-fill");
 
-    // 1. Initialize Renderer
+    // 1. Compile initial manifest (defaults to spikeScript until host provides dynamic script)
+    this.manifest = TimelineEngine.compileScriptToManifest(spikeScript as unknown as DirectorScript);
+    console.log(`Loaded initial manifest: "${this.manifest.title}" (${this.manifest.scenes.length} scenes, ${this.manifest.totalDuration.toFixed(1)}s)`);
+
+    // 2. Initialize Renderer
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -79,12 +87,12 @@ class DreamPlayer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // 2. Initialize Scene & Exponential Fog (Forest Night)
+    // 3. Initialize Scene & Exponential Fog (Forest Night)
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(NOCTURNE_STYLE.palette.void);
     this.scene.fog = new THREE.FogExp2(NOCTURNE_STYLE.fog.color, NOCTURNE_STYLE.fog.density);
 
-    // 3. Initialize Lighting
+    // 4. Initialize Lighting
     const ambientLight = new THREE.AmbientLight(
       NOCTURNE_STYLE.lighting.ambientColor,
       NOCTURNE_STYLE.lighting.ambientIntensity
@@ -109,7 +117,7 @@ class DreamPlayer {
     fillLight.position.set(-3.0, 2.0, -2.0);
     this.scene.add(fillLight);
 
-    // 4. Instantiate World Modules
+    // 5. Instantiate World Modules
     this.terrain = new DreamTerrain();
     this.scene.add(this.terrain.mesh);
 
@@ -119,28 +127,57 @@ class DreamPlayer {
     this.props = new DreamProps();
     this.scene.add(this.props.group);
 
-    this.flood = new DreamFloodEffect();
-    this.scene.add(this.flood.mesh);
+    this.effects = new DreamEffectsManager();
+    this.scene.add(this.effects.group);
 
-    // 5. Instantiate Cast & Camera
+    this.weather = new DreamWeatherSystem();
+    this.scene.add(this.weather.group);
+
+    // 6. Instantiate Cast & Camera
     this.actor = new DreamActor();
     this.scene.add(this.actor.group);
+    this.effects.bindTargets(this.props.group, this.actor.group);
 
     this.cameraController = new DirectorCamera(window.innerWidth / window.innerHeight);
 
-    // 6. Audio & Speech
+    // 7. Audio & Speech
     this.audio = new DreamAudioEngine();
     this.speech = new DreamSpeechSynthesizer();
+    this.speech.isMuted = this.audio.isMuted;
+
+    if (this.soundBtn) {
+      this.soundBtn.innerText = this.audio.isMuted ? "🔇 Sound: OFF" : "🔊 Sound: ON";
+      if (this.audio.isMuted) {
+        this.soundBtn.classList.add("muted");
+      } else {
+        this.soundBtn.classList.remove("muted");
+      }
+    }
 
     // Setup initial state from Scene 1
     this.seek(0.0);
 
     // Bind event handlers
     this.setupEventListeners();
+    this.setupPostMessageBridge();
 
     // Start RAF render loop
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
+  }
+
+  public loadScript(script: DirectorScript, audioDurations?: Record<string, number>) {
+    this.manifest = TimelineEngine.compileScriptToManifest(script, audioDurations);
+    this.currentSceneIndex = -1;
+    this.seek(0.0);
+    console.log(`Loaded dynamic script: "${this.manifest.title}" (${this.manifest.scenes.length} scenes, ${this.manifest.totalDuration.toFixed(1)}s)`);
+  }
+
+  public loadManifest(manifest: SceneManifest) {
+    this.manifest = manifest;
+    this.currentSceneIndex = -1;
+    this.seek(0.0);
+    console.log(`Loaded pre-compiled manifest: "${this.manifest.title}" (${this.manifest.totalDuration.toFixed(1)}s)`);
   }
 
   private setupEventListeners() {
@@ -172,18 +209,68 @@ class DreamPlayer {
     });
   }
 
+  private setupPostMessageBridge() {
+    window.addEventListener("message", (event) => {
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+
+      switch (data.type) {
+        case "LOAD_SCRIPT":
+          if (data.script) this.loadScript(data.script, data.audioDurations);
+          break;
+        case "LOAD_MANIFEST":
+          if (data.manifest) this.loadManifest(data.manifest);
+          break;
+        case "PLAY":
+          if (!this.isPlaying) this.togglePlay();
+          break;
+        case "PAUSE":
+          if (this.isPlaying) this.togglePlay();
+          break;
+        case "SEEK":
+          if (typeof data.time === "number") this.seek(data.time);
+          break;
+        case "EXPORT":
+          this.exportVideo();
+          break;
+      }
+    });
+  }
+
+  private notifyParentStatus(evalState: any) {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: "PLAYER_STATUS",
+          currentTime: this.currentTime,
+          totalDuration: this.manifest.totalDuration,
+          sceneIndex: evalState.sceneIndex,
+          currentShot: evalState.activeCameraShot,
+          activeSubtitle: evalState.activeSubtitle,
+          isPlaying: this.isPlaying,
+        },
+        "*"
+      );
+    }
+  }
+
   private togglePlay() {
     this.isPlaying = !this.isPlaying;
-    if (!this.audio.isMuted) {
-      this.audio.init();
-      this.audio.resume();
+    if (this.isPlaying) {
+      this.lastPlayedSpeechKey = "";
+      if (!this.audio.isMuted) {
+        this.audio.init();
+        this.audio.resume();
+      }
+    } else {
+      this.speech.stop();
     }
 
     if (this.playBtn) {
       this.playBtn.innerText = this.isPlaying ? "❚❚ Pause" : "▶ Play";
     }
 
-    if (this.isPlaying && this.currentTime >= this.totalDuration) {
+    if (this.isPlaying && this.currentTime >= this.manifest.totalDuration) {
       this.seek(0.0);
     }
   }
@@ -193,6 +280,10 @@ class DreamPlayer {
     this.speech.isMuted = isMuted;
     if (isMuted) {
       this.speech.stop();
+    } else {
+      if (this.isPlaying) {
+        this.lastPlayedSpeechKey = "";
+      }
     }
 
     if (this.soundBtn) {
@@ -205,265 +296,220 @@ class DreamPlayer {
     }
   }
 
-  public getSubtitleForTime(t: number): string {
-    if (t >= 14.6 && t <= 18.8) {
-      return "“The tide is rising, but none of the clocks have hands.”";
-    }
-    if (t >= 22.0 && t <= 32.0) {
-      return "Water filled the doorway, still and warm as breath.";
-    }
-    return "";
-  }
-
   public seek(targetTime: number) {
-    this.currentTime = Math.max(0.0, Math.min(this.totalDuration, targetTime));
-    if (this.timeSlider) this.timeSlider.value = this.currentTime.toString();
+    this.speech.stop();
+    this.lastPlayedSpeechKey = "";
+    this.currentTime = Math.max(0.0, Math.min(this.manifest.totalDuration, targetTime));
+    if (this.timeSlider) {
+      this.timeSlider.max = this.manifest.totalDuration.toString();
+      this.timeSlider.value = this.currentTime.toString();
+    }
     this.updateHUDTime();
 
-    // Reset procedural states on seek
-    this.flood.reset();
-
-    // Evaluate script at exact timestamp
-    this.evaluateDirectorScript(this.currentTime, true);
+    // Evaluate manifest state at exact timestamp
+    this.evaluateManifest(this.currentTime, true);
   }
 
-  private evaluateDirectorScript(t: number, isSeek = false) {
-    const doorPos = this.props.anchors.door_far;
-    const centerPos = this.props.anchors.center;
+  private evaluateManifest(t: number, isSeek = false) {
+    const evalState = TimelineEngine.evaluateAtTime(this.manifest, t);
+    const scene = evalState.currentScene;
 
-    // Update active caption
-    this.setCaption(this.getSubtitleForTime(t));
+    // 1. Scene Switch Handling
+    if (this.currentSceneIndex !== evalState.sceneIndex || isSeek) {
+      this.currentSceneIndex = evalState.sceneIndex;
 
-    // --- SCENE 1: Arrival & Walk (0.0s - 12.0s) ---
-    if (t < 12.0) {
-      if (this.sceneValEl) this.sceneValEl.innerText = "1/4";
-      this.actor.puppet.setFaceVisibility("shadowed");
-      this.audio.setTicking(false);
+      // Update World Kit, anchors, and props
+      this.props.setWorldKit(scene.world.kit, scene.world.props);
+      this.effects.setSceneEffects(scene.world.effects);
+      this.weather.setWeather(scene.world.weather);
+      this.effects.bindTargets(this.props.group, this.actor.group);
 
-      if (t < 2.0) {
-        if (isSeek || (t >= 0.0 && t <= 0.1)) {
-          this.cameraController.setShot("wide", centerPos, t, "dissolve");
-          this.actor.teleport(doorPos, centerPos);
-        }
-      } else {
-        if (isSeek || (t >= 2.0 && t <= 2.1)) {
-          this.cameraController.setShot("tracking", this.actor.group.position, t, "cut");
-        }
+      // Spawn actor at initial anchor
+      const defaultActor = scene.cast[0];
+      if (defaultActor) {
+        const spawnPos = this.props.anchors[defaultActor.spawn] || this.props.anchors.center || new THREE.Vector3();
+        this.actor.teleport(spawnPos);
+        this.actor.setFaceVisibility(defaultActor.faceVisibility);
       }
 
-      // Actor walking from door_far to center (0.8s to 7.3s)
-      if (t >= 0.8 && t < 7.3) {
-        const progress = (t - 0.8) / 6.5;
-        this.actor.group.position.lerpVectors(doorPos, centerPos, progress);
-        this.actor.group.lookAt(centerPos.x, this.actor.group.position.y, centerPos.z);
-        this.actor.playAction("walk", 0.8, 6.5);
-        this.actor.puppet.applyWalkCycle(t, 1.0);
-      } else if (t >= 7.3) {
-        this.actor.group.position.copy(centerPos);
-        this.actor.playAction("idle", 7.3, 4.7);
-        this.actor.puppet.applyIdle(t);
-      } else {
-        this.actor.playAction("idle", 0.0, 0.8);
+      // Set initial camera shot
+      const anchorPos = this.actor.group.position;
+      this.cameraController.setShot(evalState.activeCameraShot, anchorPos, t, scene.transitionIn);
+
+      // Update ambient audio preset
+      this.audio.setAmbientPreset(scene.ambient);
+
+      if (this.sceneValEl) {
+        this.sceneValEl.innerText = `${scene.index + 1}/${this.manifest.scenes.length}`;
       }
     }
 
-    // --- SCENE 2: Speech & Clocks (12.0s - 22.0s) ---
-    else if (t >= 12.0 && t < 22.0) {
-      if (this.sceneValEl) this.sceneValEl.innerText = "2/4";
-      this.actor.group.position.copy(centerPos);
-      this.actor.puppet.setFaceVisibility("full");
-      this.audio.setTicking(true);
-
-      if (t < 14.2) {
-        if (isSeek || (t >= 12.0 && t <= 12.1)) {
-          this.cameraController.setShot("hero_low", centerPos, t, "cut");
-          this.actor.playAction("look_around", 12.0, 2.2);
-        }
-        this.setCaption("");
-      } else {
-        if (isSeek || (t >= 14.2 && t <= 14.3)) {
-          this.cameraController.setShot("close_up", centerPos, t, "cut");
-        }
-
-        // Speaking beat (14.6s - 18.8s)
-        const line = "The tide is rising, but none of the clocks have hands.";
-
-        if (t >= 14.6 && t <= 18.8) {
-          if (!this.audio.isMuted && !this.speechTriggered && this.isPlaying) {
-            this.speech.speak(line);
-            this.speechTriggered = true;
-          }
-          this.actor.speak(line, 14.6, 4.2);
-        }
-      }
-    }
-
-    // --- SCENE 3: Flood Effect & Water Rising (22.0s - 32.0s) ---
-    else if (t >= 22.0 && t < 32.0) {
-      if (this.sceneValEl) this.sceneValEl.innerText = "3/4";
-      this.actor.puppet.setFaceVisibility("shadowed");
-      this.audio.setTicking(true);
-      this.speechTriggered = false;
-
-      if (t < 25.5) {
-        if (isSeek || (t >= 22.0 && t <= 22.1)) {
-          this.cameraController.setShot("wide", centerPos, t, "cut");
-          this.actor.playAction("reach", 24.0, 3.0);
-        }
-      } else {
-        if (isSeek || (t >= 25.5 && t <= 25.6)) {
-          this.cameraController.setShot("dolly_in", centerPos, t, "cut");
-        }
-      }
-
-      // Water plane rising over 5.5s (23.0s to 28.5s)
-      if (t >= 23.0 && t <= 28.5) {
-        const floodProgress = (t - 23.0) / 5.5;
-        this.flood.setProgress(floodProgress);
-      } else if (t > 28.5) {
-        this.flood.setProgress(1.0);
-      }
-    }
-
-    // --- SCENE 4: Epilogue & Dissolve (32.0s - 38.0s) ---
-    else {
-      if (this.sceneValEl) this.sceneValEl.innerText = "4/4";
-      this.audio.setTicking(false);
-      this.setCaption("");
-      this.flood.setProgress(1.0);
-
-      if (t < 33.5) {
-        if (isSeek || (t >= 32.0 && t <= 32.1)) {
-          this.cameraController.setShot("close_up", centerPos, t, "dissolve");
-        }
-      } else {
-        if (isSeek || (t >= 33.5 && t <= 33.6)) {
-          this.cameraController.setShot("hero_low", centerPos, t, "dissolve");
-          this.actor.playAction("idle", 33.5, 4.5);
-        }
-      }
-    }
-
-    // Update active shot HUD label
+    // 2. Continuous Camera Update
     if (this.shotValEl) {
-      this.shotValEl.innerText = this.cameraController.getActiveShotName();
+      this.shotValEl.innerText = evalState.activeCameraShot;
     }
+    this.cameraController.update(t, this.actor.group.position);
+
+    // 3. Actor Gestures & Locomotion
+    const defaultActor = scene.cast[0];
+    if (defaultActor) {
+      const actorAction = evalState.activeActorActions[defaultActor.name] || { action: "idle", args: {} };
+      if (actorAction.action === "walk_to" || actorAction.action === "run_to") {
+        const destAnchor = (actorAction.args?.anchor as string) || "center";
+        const targetPos = this.props.anchors[destAnchor] || new THREE.Vector3();
+        this.actor.walkTo(targetPos, scene.startTime, scene.duration, actorAction.action === "run_to");
+      } else {
+        this.actor.playAction(actorAction.action as AnimateClip);
+      }
+
+      if (actorAction.args?.emotion) {
+        this.actor.setEmotion(actorAction.args.emotion as AllowedEmotion);
+      }
+      if (actorAction.args?.look_at) {
+        const lookAnchor = this.props.anchors[actorAction.args.look_at as string];
+        if (lookAnchor) this.actor.setLookAt(lookAnchor);
+      }
+    }
+
+    // 4. Effects & Weather Update
+    this.effects.update(evalState.localSceneTime, t);
+
+    // 5. Speech & Audio Ducking
+    this.audio.setSpeechDucking(evalState.isSpeechActive);
+    this.audio.setMotif(evalState.activeMotif);
+
+    if (this.isPlaying && evalState.isSpeechActive && evalState.activeSpeech) {
+      const speechKey = `${evalState.activeSpeech.startTime}_${evalState.activeSpeech.text}`;
+      if (this.lastPlayedSpeechKey !== speechKey) {
+        this.lastPlayedSpeechKey = speechKey;
+        this.actor.speak(
+          evalState.activeSpeech.text,
+          evalState.activeSpeech.startTime,
+          evalState.activeSpeech.duration,
+          evalState.activeSpeech.wordTimings
+        );
+        if (!this.audio.isMuted) {
+          this.speech.speak(
+            evalState.activeSpeech.text,
+            evalState.activeSpeech.audioUrl
+          );
+        }
+      }
+    } else if (!evalState.isSpeechActive) {
+      this.lastPlayedSpeechKey = "";
+    }
+
+    // 6. Subtitles & HUD Update
+    this.setCaption(evalState.activeSubtitle);
+    this.notifyParentStatus(evalState);
   }
 
   private setCaption(text: string) {
-    if (this.captionEl) {
+    if (!this.captionEl) return;
+    if (text) {
       this.captionEl.innerText = text;
-      this.captionEl.style.opacity = text ? "1" : "0";
+      this.captionEl.style.opacity = "1";
+    } else {
+      this.captionEl.style.opacity = "0";
     }
   }
 
   private updateHUDTime() {
-    if (this.currentTimeEl) {
-      const mins = Math.floor(this.currentTime / 60);
-      const secs = Math.floor(this.currentTime % 60);
-      this.currentTimeEl.innerText = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    if (!this.currentTimeEl) return;
+    const curM = Math.floor(this.currentTime / 60);
+    const curS = Math.floor(this.currentTime % 60);
+    const totM = Math.floor(this.manifest.totalDuration / 60);
+    const totS = Math.floor(this.manifest.totalDuration % 60);
+    this.currentTimeEl.innerText = `${curM}:${curS.toString().padStart(2, "0")} / ${totM}:${totS.toString().padStart(2, "0")}`;
+
+    if (this.progressFillEl) {
+      const pct = (this.currentTime / Math.max(1, this.manifest.totalDuration)) * 100;
+      this.progressFillEl.style.width = `${pct}%`;
     }
   }
 
-  private animate(rafTime: number) {
+  private updateFPS() {
+    this.frameCount++;
+    const now = performance.now();
+    if (now - this.lastFpsTime >= 1000) {
+      const fps = Math.round((this.frameCount * 1000) / (now - this.lastFpsTime));
+      if (this.fpsValEl) this.fpsValEl.innerText = fps.toString();
+      this.frameCount = 0;
+      this.lastFpsTime = now;
+    }
+  }
+
+  private animate(now: number) {
     requestAnimationFrame(this.animate);
 
-    const delta = this.lastRafTime === 0 ? 0.016 : Math.min(0.1, (rafTime - this.lastRafTime) / 1000);
-    this.lastRafTime = rafTime;
+    if (this.lastRafTime === 0) this.lastRafTime = now;
+    const deltaSeconds = Math.min(0.1, (now - this.lastRafTime) / 1000);
+    this.lastRafTime = now;
 
     if (this.isPlaying) {
-      this.currentTime += delta;
-      if (this.currentTime >= this.totalDuration) {
-        this.currentTime = this.totalDuration;
-        this.togglePlay();
+      this.currentTime += deltaSeconds;
+      if (this.currentTime >= this.manifest.totalDuration) {
+        this.currentTime = this.manifest.totalDuration;
+        this.isPlaying = false;
+        if (this.playBtn) this.playBtn.innerText = "▶ Play";
       }
 
       if (this.timeSlider) this.timeSlider.value = this.currentTime.toString();
       this.updateHUDTime();
-
-      this.evaluateDirectorScript(this.currentTime);
+      this.evaluateManifest(this.currentTime, false);
     }
 
-    // Render step at current timestamp
-    this.renderFrame(this.currentTime);
+    this.actor.update(this.currentTime);
+    this.props.update(this.currentTime);
+    this.weather.update(deltaSeconds, this.currentTime);
+    this.audio.update(this.currentTime);
 
-    // FPS calculation
-    this.frameCount++;
-    if (rafTime - this.lastFpsTime >= 500) {
-      const fps = Math.round((this.frameCount * 1000) / (rafTime - this.lastFpsTime));
-      if (this.fpsValEl) {
-        this.fpsValEl.innerText = fps.toString();
-      }
-      this.frameCount = 0;
-      this.lastFpsTime = rafTime;
-    }
-  }
-
-  public renderFrame(timeSeconds: number) {
-    // 1. Update actor
-    this.actor.update(timeSeconds);
-
-    // 2. Update props (floating clocks bobbing)
-    const isFloating = timeSeconds >= 23.0 && timeSeconds <= 32.0;
-    this.props.update(timeSeconds * 1000, isFloating);
-
-    // 3. Update sky (slow rotation of star ring)
-    this.sky.update(timeSeconds * 1000);
-
-    // 4. Update water ripple
-    this.flood.update(timeSeconds);
-
-    // 5. Update audio sound motifs
-    this.audio.update(timeSeconds);
-
-    // 6. Update camera tracking & drift
-    this.cameraController.update(timeSeconds, this.actor.group.position);
-
-    // 7. Render Three.js scene
     this.renderer.render(this.scene, this.cameraController.camera);
+    this.updateFPS();
   }
 
-  private async exportVideo() {
-    if (!VideoExporter.isSupported()) {
-      alert("WebCodecs is not supported in this browser. Please use Chrome/Edge to export video.");
-      return;
-    }
+  public async exportVideo() {
+    if (this.isPlaying) this.togglePlay();
 
-    const wasPlaying = this.isPlaying;
-    this.isPlaying = false;
-    if (this.playBtn) this.playBtn.innerText = "▶ Play";
-
-    if (this.exportProgressEl) this.exportProgressEl.classList.remove("hidden");
     if (this.exportBtn) this.exportBtn.disabled = true;
+    if (this.exportProgressEl) this.exportProgressEl.classList.remove("hidden");
+    if (this.exportStatusEl) this.exportStatusEl.innerText = "Rendering frames deterministically...";
 
     try {
       const blob = await VideoExporter.exportScene(
         this.canvas,
-        this.totalDuration,
+        this.manifest.totalDuration,
         (t) => {
-          this.evaluateDirectorScript(t, true);
-          this.renderFrame(t);
+          this.evaluateManifest(t, true);
+          this.actor.update(t);
+          this.renderer.render(this.scene, this.cameraController.camera);
         },
-        (t) => this.getSubtitleForTime(t),
-        (progress, status) => {
-          if (this.progressFillEl) this.progressFillEl.style.width = `${progress}%`;
-          if (this.exportPercentEl) this.exportPercentEl.innerText = `${progress}%`;
-          if (this.exportStatusEl) this.exportStatusEl.innerText = status;
+        (t) => TimelineEngine.evaluateAtTime(this.manifest, t).activeSubtitle,
+        (progress, stage) => {
+          const pct = Math.round(progress * 100);
+          if (this.exportPercentEl) this.exportPercentEl.innerText = `${pct}%`;
+          if (this.exportStatusEl) this.exportStatusEl.innerText = `${stage} (${pct}%)`;
         }
       );
 
-      VideoExporter.downloadBlob(blob, "dream-animation-spike.mp4");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${this.manifest.title.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_sanctum.mp4`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      if (this.exportStatusEl) this.exportStatusEl.innerText = "Export Complete!";
     } catch (err: any) {
       console.error("Export failed:", err);
-      alert(`Export failed: ${err.message}`);
+      if (this.exportStatusEl) this.exportStatusEl.innerText = `Export Failed: ${err.message}`;
     } finally {
-      if (this.exportProgressEl) this.exportProgressEl.classList.add("hidden");
       if (this.exportBtn) this.exportBtn.disabled = false;
-      if (wasPlaying) this.togglePlay();
     }
   }
 }
 
+// Auto-boot player on window load
 window.addEventListener("DOMContentLoaded", () => {
-  new DreamPlayer();
+  (window as any).__dreamPlayer = new DreamPlayer();
 });
